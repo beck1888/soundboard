@@ -751,11 +751,70 @@ function initializeUpload() {
   const uploadProgress = document.getElementById("upload-progress");
   const uploadProgressFill = document.querySelector(".upload-progress-fill");
   const uploadProgressText = document.querySelector(".upload-progress-text");
+  const fileUploadArea = document.querySelector(".file-upload-area");
+  const fileUploadText = document.querySelector(".file-upload-text");
   
   if (!uploadToggle || !uploadModal) {
     console.error("Upload elements not found");
     return;
   }
+
+  // Update file upload text when file is selected
+  function updateFileUploadText(fileName) {
+    if (fileName) {
+      fileUploadText.innerHTML = `
+        <span class="file-upload-main">Selected: ${fileName}</span>
+        <span class="file-upload-sub">Click to choose a different file</span>
+      `;
+      fileUploadArea.classList.add('file-selected');
+    } else {
+      fileUploadText.innerHTML = `
+        <span class="file-upload-main">Click to choose a file</span>
+        <span class="file-upload-sub">or drop a file here</span>
+      `;
+      fileUploadArea.classList.remove('file-selected');
+    }
+  }
+
+  // Drag and drop functionality
+  let dragCounter = 0;
+
+  fileUploadArea.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    dragCounter++;
+    fileUploadArea.classList.add('drag-over');
+  });
+
+  fileUploadArea.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    dragCounter--;
+    if (dragCounter === 0) {
+      fileUploadArea.classList.remove('drag-over');
+    }
+  });
+
+  fileUploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+  });
+
+  fileUploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dragCounter = 0;
+    fileUploadArea.classList.remove('drag-over');
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      soundFileInput.files = files;
+      updateFileUploadText(files[0].name);
+      
+      // Auto-generate filename if name input is empty
+      if (!soundNameInput.value.trim()) {
+        const fileName = files[0].name;
+        const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
+        soundNameInput.value = nameWithoutExt;
+      }
+    }
+  });
   
   // Open upload modal
   uploadToggle.addEventListener("click", (e) => {
@@ -782,10 +841,16 @@ function initializeUpload() {
   
   // Auto-generate filename from file selection
   soundFileInput.addEventListener("change", (e) => {
-    if (e.target.files.length > 0 && !soundNameInput.value.trim()) {
+    if (e.target.files.length > 0) {
       const fileName = e.target.files[0].name;
-      const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
-      soundNameInput.value = nameWithoutExt;
+      updateFileUploadText(fileName);
+      
+      if (!soundNameInput.value.trim()) {
+        const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
+        soundNameInput.value = nameWithoutExt;
+      }
+    } else {
+      updateFileUploadText(null);
     }
   });
   
@@ -814,6 +879,7 @@ function initializeUpload() {
     
     // Reset form and UI
     uploadForm.reset();
+    updateFileUploadText(null);
     uploadProgress.style.display = "none";
     uploadForm.style.display = "flex";
     

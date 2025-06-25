@@ -514,7 +514,7 @@ async function loadSounds() {
     }
     
     // Show normal UI
-    soundsContainer.style.display = "block";
+    soundsContainer.style.display = "grid";
     if (searchContainer) {
       searchContainer.style.display = "flex";
     }
@@ -654,7 +654,7 @@ function displaySearchResults(results) {
   }
   
   noResultsContainer.style.display = "none";
-  soundsContainer.style.display = "block";
+  soundsContainer.style.display = "grid";
   soundsContainer.innerHTML = "";
   
   // Sort results alphabetically by sound name (case-insensitive)

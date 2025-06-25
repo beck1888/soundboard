@@ -763,7 +763,7 @@ function initializeUpload() {
   function updateFileUploadText(fileName) {
     if (fileName) {
       fileUploadText.innerHTML = `
-        <span class="file-upload-main">Selected: ${fileName}</span>
+        <span class="file-upload-main">✔︎ File Uploaded</span>
         <span class="file-upload-sub">Click to choose a different file</span>
       `;
       fileUploadArea.classList.add('file-selected');
@@ -813,6 +813,12 @@ function initializeUpload() {
         const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
         soundNameInput.value = nameWithoutExt;
       }
+      
+      // Focus the sound name input after file drop
+      setTimeout(() => {
+        soundNameInput.focus();
+        soundNameInput.select();
+      }, 100);
     }
   });
   
@@ -849,6 +855,12 @@ function initializeUpload() {
         const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
         soundNameInput.value = nameWithoutExt;
       }
+      
+      // Focus the sound name input after file selection
+      setTimeout(() => {
+        soundNameInput.focus();
+        soundNameInput.select();
+      }, 100);
     } else {
       updateFileUploadText(null);
     }

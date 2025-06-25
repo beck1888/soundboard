@@ -159,6 +159,11 @@ function syncFavoritesWithSounds(sounds, favorites) {
 // Function to strip metadata except title
 function stripMetadataExceptTitle(inputPath, outputPath, title) {
   return new Promise((resolve, reject) => {
+    // Verify input file exists
+    if (!fs.existsSync(inputPath)) {
+      return reject(new Error(`Input file does not exist: ${inputPath}`));
+    }
+    
     ffmpeg(inputPath)
       .outputOptions([
         '-map', '0:a', // Copy audio stream
@@ -170,8 +175,13 @@ function stripMetadataExceptTitle(inputPath, outputPath, title) {
       .addOption('-metadata', `title=${title}`) // Use addOption for proper escaping
       .output(outputPath)
       .on('end', () => {
-        console.log('✅ Metadata stripped successfully');
-        resolve();
+        // Verify output file was actually created
+        if (fs.existsSync(outputPath)) {
+          console.log('✅ Metadata stripped successfully');
+          resolve();
+        } else {
+          reject(new Error(`Output file was not created: ${outputPath}`));
+        }
       })
       .on('error', (err) => {
         console.error('❌ Error stripping metadata:', err);
@@ -184,6 +194,11 @@ function stripMetadataExceptTitle(inputPath, outputPath, title) {
 // Function to convert audio file to MP3 with metadata stripping
 function convertToMp3WithCleanMetadata(inputPath, outputPath, title) {
   return new Promise((resolve, reject) => {
+    // Verify input file exists
+    if (!fs.existsSync(inputPath)) {
+      return reject(new Error(`Input file does not exist: ${inputPath}`));
+    }
+    
     ffmpeg(inputPath)
       .toFormat('mp3')
       .audioBitrate(192) // Good quality MP3
@@ -200,8 +215,13 @@ function convertToMp3WithCleanMetadata(inputPath, outputPath, title) {
         console.log(`🔄 Converting: ${Math.round(progress.percent || 0)}%`);
       })
       .on('end', () => {
-        console.log('✅ Audio converted to MP3 successfully');
-        resolve();
+        // Verify output file was actually created
+        if (fs.existsSync(outputPath)) {
+          console.log('✅ Audio converted to MP3 successfully');
+          resolve();
+        } else {
+          reject(new Error(`Output file was not created: ${outputPath}`));
+        }
       })
       .on('error', (err) => {
         console.error('❌ Error converting audio:', err);
@@ -243,6 +263,13 @@ app.post("/api/upload", upload.single('soundFile'), async (req, res) => {
     // Create a temporary path for the processed file
     const processedTempPath = path.join(SFX_DIR, `processed_${Date.now()}_${finalFilename}`);
     
+    console.log(`📝 Upload details:
+      - Original file: ${req.file.originalname}
+      - Temp file: ${req.file.path}
+      - Processed temp: ${processedTempPath}
+      - Final path: ${finalPath}
+      - MIME type: ${req.file.mimetype}`);
+    
     try {
       // Check if the uploaded file is already MP3
       const isAlreadyMp3 = req.file.mimetype === 'audio/mpeg' || 
@@ -258,6 +285,11 @@ app.post("/api/upload", upload.single('soundFile'), async (req, res) => {
         await convertToMp3WithCleanMetadata(req.file.path, processedTempPath, sanitizedName.replace('.mp3', ''));
       }
       
+      // Verify that the processed file was actually created
+      if (!fs.existsSync(processedTempPath)) {
+        throw new Error(`Processed file was not created: ${processedTempPath}`);
+      }
+      
       // Remove the original uploaded file
       fs.unlinkSync(req.file.path);
       
@@ -270,11 +302,33 @@ app.post("/api/upload", upload.single('soundFile'), async (req, res) => {
     } catch (processingError) {
       console.error('Error processing file:', processingError);
       
-      // Clean up files on error
-      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-      if (fs.existsSync(processedTempPath)) fs.unlinkSync(processedTempPath);
+      // Check if we can fall back to using the original file (if it's already MP3)
+      const isAlreadyMp3 = req.file.mimetype === 'audio/mpeg' || 
+                          path.extname(req.file.originalname).toLowerCase() === '.mp3';
       
-      return res.status(500).json({ error: "Error processing/converting audio file" });
+      if (isAlreadyMp3 && fs.existsSync(req.file.path)) {
+        console.log('🔄 Falling back to using original MP3 file without processing...');
+        try {
+          // Just copy the original file to the final location
+          fs.copyFileSync(req.file.path, finalPath);
+          fs.unlinkSync(req.file.path); // Clean up original
+          console.log(`✅ File uploaded successfully (fallback): ${finalFilename}`);
+        } catch (fallbackError) {
+          console.error('❌ Fallback also failed:', fallbackError);
+          // Clean up files on error
+          if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+          if (fs.existsSync(processedTempPath)) fs.unlinkSync(processedTempPath);
+          if (fs.existsSync(finalPath)) fs.unlinkSync(finalPath);
+          
+          return res.status(500).json({ error: "Error processing/converting audio file" });
+        }
+      } else {
+        // Clean up files on error
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        if (fs.existsSync(processedTempPath)) fs.unlinkSync(processedTempPath);
+        
+        return res.status(500).json({ error: "Error processing/converting audio file" });
+      }
     }
     
     // Update favorites to include the new sound

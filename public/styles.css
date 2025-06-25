@@ -3,7 +3,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   background: #f8f9fa;
   color: #2c3e50;
-  padding: 4rem 2rem 2rem 2rem;
+  padding: 6rem 2rem 2rem 2rem;
   max-width: 900px;
   margin: auto;
   position: relative;
@@ -11,19 +11,28 @@ body {
   box-sizing: border-box;
 }
 
-.search-container {
+.main-header {
   position: fixed;
-  top: 1.5rem;
-  right: 1.5rem;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-bottom: 1px solid #e5e5e5;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   z-index: 100;
+  padding: 1rem 2rem;
   display: flex;
-  gap: 0.75rem;
   align-items: center;
-  input:focus,
-  textarea:focus,
-  button:focus {
-    outline: none;
-  }
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.search-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  max-width: 500px;
+  margin: 0 2rem;
 }
 
 .upload-toggle, .heart-filter, .search-toggle {
@@ -50,9 +59,19 @@ body {
   display: none;
 }
 
-.upload-toggle:hover, .heart-filter:hover, .search-toggle:hover {
+.upload-toggle:hover, .search-toggle:hover {
   background: #f0f0f0;
   border-color: #ccc;
+}
+
+.upload-toggle:hover {
+  background: #e8f5e8;
+  border-color: #c8e6c9;
+}
+
+.heart-filter:hover {
+  background: #fce4ec;
+  border-color: #f8bbd9;
 }
 
 .upload-toggle.active {
@@ -62,8 +81,8 @@ body {
 }
 
 .heart-filter.active {
-  background: #dc3545;
-  border-color: #dc3545;
+  background: #ff69b4;
+  border-color: #ff69b4;
   color: white;
 }
 
@@ -80,28 +99,17 @@ body {
 }
 
 .search-bar {
-  position: absolute;
-  top: 0;
-  right: 0;
-  background: white;
+  background: #f8f9fa;
   border: 1px solid #ddd;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
   display: flex;
   align-items: center;
-  width: 320px;
-  max-width: calc(100vw - 4rem);
+  width: 100%;
   transition: all 0.2s ease;
   overflow: hidden;
 }
-  input:focus,
-  textarea:focus {
-    outline: none;
-    box-shadow: none;
-  }
-}
 
-.search-bar.active {
+.search-bar:focus-within {
   background: white;
   border-color: #007aff;
   box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
@@ -110,9 +118,9 @@ body {
 .search-bar input {
   flex: 1;
   border: none;
-  padding: 1rem 1.25rem;
+  padding: 0.75rem 1rem;
   font-size: 1rem;
-  border-radius: 6px 0 0 6px;
+  border-radius: 8px;
   outline: none;
   background: transparent;
   color: #2c3e50;
@@ -122,25 +130,6 @@ body {
 .search-bar input::placeholder {
   color: #7f8c8d;
   opacity: 0.8;
-}
-
-.search-close {
-  background: none;
-  border: none;
-  padding: 1rem 1.25rem;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #7f8c8d;
-  border-radius: 0 6px 6px 0;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.search-close:hover {
-  background: #f0f0f0;
-  color: #dc3545;
 }
 
 .no-results {
@@ -417,6 +406,53 @@ h1 {
   }
 }
 
+/* Responsive Design for Header */
+@media (max-width: 768px) {
+  .main-header {
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+  }
+  
+  .search-container {
+    margin: 0 1rem;
+  }
+  
+  body {
+    padding: 5.5rem 1rem 2rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-header {
+    padding: 0.5rem;
+    gap: 0.25rem;
+  }
+  
+  .search-container {
+    margin: 0 0.5rem;
+  }
+  
+  .upload-toggle,
+  .heart-filter {
+    padding: 0.5rem;
+  }
+  
+  .upload-icon,
+  .heart-filter-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .search-bar input {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9rem;
+  }
+  
+  body {
+    padding: 5rem 0.5rem 2rem 0.5rem;
+  }
+}
+
 /* Loading and No Results Styles */
 .loading-screen {
   position: fixed;
@@ -612,6 +648,24 @@ button:focus-visible,
 input:focus-visible {
   outline: 2px solid #007aff;
   outline-offset: 2px;
+}
+
+/* General focus styles */
+input:focus,
+textarea:focus,
+button:focus {
+  outline: none;
+}
+
+/* Improved button focus styles */
+.upload-toggle:focus,
+.heart-filter:focus {
+  outline: none;
+}
+
+.upload-toggle:focus-visible,
+.heart-filter:focus-visible {
+  outline: none;
 }
 
 /* Smooth scrolling */

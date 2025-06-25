@@ -7,22 +7,21 @@
   <link rel="icon" href="/favicon.ico" type="image/x-icon">
 </head>
 <body>
-  <!-- <h1>Sound Locker</h1> -->
-  <div class="search-container">
+  <header class="main-header">
     <button id="upload-toggle" class="upload-toggle" title="Upload sound">
       <img src="/fluentui-system-icons/add.svg" alt="Upload" class="upload-icon">
     </button>
+    
+    <div class="search-container">
+      <div id="search-bar" class="search-bar">
+        <input type="text" id="search-input" placeholder="Search sounds..." />
+      </div>
+    </div>
+    
     <button id="heart-filter" class="heart-filter" title="Filter favorites">
       <img src="/fluentui-system-icons/heart_off.svg" alt="Show all" class="heart-filter-icon">
     </button>
-    <button id="search-toggle" class="search-toggle">
-      <img src="/fluentui-system-icons/search.svg" alt="Search" class="search-icon">
-    </button>
-    <div id="search-bar" class="search-bar" style="display: none;">
-      <input type="text" id="search-input" placeholder="Search sounds..." />
-      <button id="search-close" class="search-close">&times;</button>
-    </div>
-  </div>
+  </header>
   <div id="loading" class="loading-screen">
     <div class="spinner"></div>
     <p>Loading sounds...</p>

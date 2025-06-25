@@ -475,7 +475,6 @@ function createSoundItem(file, isFavorite) {
 async function loadSounds() {
   const loadingScreen = document.getElementById("loading");
   const soundsContainer = document.getElementById("sounds");
-  const searchContainer = document.querySelector(".search-container");
   const criticalErrorScreen = document.getElementById("critical-error");
   const emptyDirectoryScreen = document.getElementById("empty-directory");
   const noResultsContainer = document.getElementById("no-results");
@@ -486,11 +485,6 @@ async function loadSounds() {
   if (criticalErrorScreen) criticalErrorScreen.style.display = "none";
   if (emptyDirectoryScreen) emptyDirectoryScreen.style.display = "none";
   if (noResultsContainer) noResultsContainer.style.display = "none";
-  
-  // Hide search container buttons during loading
-  if (searchContainer) {
-    searchContainer.style.display = "none";
-  }
   
   try {
     const response = await fetch("/api/sounds");
@@ -515,9 +509,6 @@ async function loadSounds() {
     
     // Show normal UI
     soundsContainer.style.display = "grid";
-    if (searchContainer) {
-      searchContainer.style.display = "flex";
-    }
     
     // Clear container and populate with sounds
     soundsContainer.innerHTML = "";
@@ -551,7 +542,6 @@ async function loadSounds() {
 // Global variables for search and sounds
 let allSounds = [];
 let allFavorites = {};
-let isSearchActive = false;
 let isHeartFilterActive = false;
 
 // Fuzzy search function
@@ -670,40 +660,20 @@ function displaySearchResults(results) {
 
 // Search functionality
 function initializeSearch() {
-  const searchToggle = document.getElementById("search-toggle");
-  const searchBar = document.getElementById("search-bar");
   const searchInput = document.getElementById("search-input");
-  const searchClose = document.getElementById("search-close");
   const heartFilter = document.getElementById("heart-filter");
   
   // Check if elements exist
-  if (!searchToggle || !searchBar || !searchInput || !searchClose || !heartFilter) {
+  if (!searchInput || !heartFilter) {
     console.error("Search elements not found");
     return;
   }
-  
-  // Ensure search toggle is visible initially
-  searchToggle.style.display = "block";
-  searchBar.style.display = "none";
   
   // Heart filter functionality
   heartFilter.addEventListener("click", (e) => {
     e.preventDefault();
     toggleHeartFilter();
   });
-  
-  // Toggle search bar
-  searchToggle.addEventListener("click", (e) => {
-    e.preventDefault();
-    if (isSearchActive) {
-      closeSearch();
-    } else {
-      openSearch();
-    }
-  });
-  
-  // Close search
-  searchClose.addEventListener("click", closeSearch);
   
   // Search input handler
   searchInput.addEventListener("input", (e) => {
@@ -712,46 +682,20 @@ function initializeSearch() {
   
   // Keyboard shortcuts
   document.addEventListener("keydown", (e) => {
-    // Close search on Escape key (only if no other modals are open)
-    if (e.key === "Escape" && isSearchActive && !document.querySelector('.modal[style*="flex"]') && !document.querySelector('.upload-modal[style*="flex"]')) {
-      closeSearch();
-    }
-    
-    // Open search on Cmd+F (Mac) or Ctrl+F (Windows/Linux)
-    if ((e.metaKey || e.ctrlKey) && e.key === "f" && !isSearchActive && !document.querySelector('.modal[style*="flex"]') && !document.querySelector('.upload-modal[style*="flex"]')) {
+    // Focus search on Cmd+F (Mac) or Ctrl+F (Windows/Linux)
+    if ((e.metaKey || e.ctrlKey) && e.key === "f" && !document.querySelector('.modal[style*="flex"]') && !document.querySelector('.upload-modal[style*="flex"]')) {
       e.preventDefault(); // Prevent browser's default find dialog
-      openSearch();
+      searchInput.focus();
+      searchInput.select();
     }
     
     // Quick sound search with '/' key (like GitHub, Reddit)
-    if (e.key === "/" && !isSearchActive && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+    if (e.key === "/" && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
       e.preventDefault();
-      openSearch();
+      searchInput.focus();
+      searchInput.select();
     }
   });
-  
-  function openSearch() {
-    isSearchActive = true;
-    searchBar.style.display = "flex";
-    searchBar.classList.add("active");
-    searchToggle.style.display = "none";
-    
-    // Focus input after a brief delay to ensure animation is smooth
-    setTimeout(() => {
-      searchInput.focus();
-    }, 100);
-  }
-  
-  function closeSearch() {
-    isSearchActive = false;
-    searchBar.style.display = "none";
-    searchBar.classList.remove("active");
-    searchToggle.style.display = "block";
-    searchInput.value = "";
-    
-    // Refresh results based on current heart filter state
-    refreshResults();
-  }
   
   function toggleHeartFilter() {
     isHeartFilterActive = !isHeartFilterActive;
@@ -939,12 +883,8 @@ function showCriticalError(errorData) {
   const criticalErrorScreen = document.getElementById("critical-error");
   const criticalErrorMessage = document.getElementById("critical-error-message");
   const criticalErrorDetails = document.getElementById("critical-error-details");
-  const searchContainer = document.querySelector(".search-container");
   
   loadingScreen.style.display = "none";
-  if (searchContainer) {
-    searchContainer.style.display = "none";
-  }
   
   let message = "";
   let details = "";
@@ -1015,13 +955,9 @@ function showCriticalError(errorData) {
 
 function showEmptyDirectory() {
   const emptyDirectoryScreen = document.getElementById("empty-directory");
-  const searchContainer = document.querySelector(".search-container");
   
-  // Show empty directory screen and search container (for upload button)
+  // Show empty directory screen
   emptyDirectoryScreen.style.display = "flex";
-  if (searchContainer) {
-    searchContainer.style.display = "flex";
-  }
   
   // Initialize upload functionality even when empty
   initializeUpload();

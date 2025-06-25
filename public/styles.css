@@ -1261,6 +1261,7 @@ html {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .info-stat {
@@ -1282,6 +1283,40 @@ html {
   font-weight: 700;
   color: #007aff;
   font-size: 1.1rem;
+}
+
+.info-paths {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.info-path {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.info-path .info-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.25rem;
+}
+
+.info-path-value {
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  font-size: 0.9rem;
+  background: #ffffff;
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+  color: #6c757d;
+  word-break: break-all;
+  line-height: 1.4;
 }
 
 .main-content {

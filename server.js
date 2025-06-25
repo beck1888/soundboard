@@ -468,6 +468,74 @@ app.get("/sfx/:filename", (req, res) => {
   res.sendFile(filePath);
 });
 
+// Get library information (size, paths, etc.)
+app.get("/api/library-info", (req, res) => {
+  try {
+    // Check if SFX directory exists
+    if (!fs.existsSync(SFX_DIR)) {
+      return res.status(500).json({ 
+        error: "DIRECTORY_NOT_FOUND",
+        message: "Sound effects directory does not exist",
+        paths: {
+          libraryPath: SFX_DIR,
+          favoritesPath: FAVORITES_FILE
+        }
+      });
+    }
+
+    // Calculate total size of all MP3 files
+    let totalSize = 0;
+    const files = fs.readdirSync(SFX_DIR);
+    const mp3Files = files.filter(file => file.toLowerCase().endsWith(".mp3"));
+    
+    mp3Files.forEach(file => {
+      try {
+        const filePath = path.join(SFX_DIR, file);
+        const stats = fs.statSync(filePath);
+        totalSize += stats.size;
+      } catch (err) {
+        console.warn(`Warning: Could not get size for file ${file}:`, err.message);
+      }
+    });
+
+    // Format size in human-readable format
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 B';
+      
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    res.json({
+      success: true,
+      librarySize: {
+        bytes: totalSize,
+        formatted: formatBytes(totalSize)
+      },
+      paths: {
+        libraryPath: SFX_DIR,
+        favoritesPath: FAVORITES_FILE
+      },
+      fileCount: mp3Files.length
+    });
+
+  } catch (error) {
+    console.error("Error getting library info:", error);
+    res.status(500).json({ 
+      error: "LIBRARY_INFO_ERROR",
+      message: "Error retrieving library information",
+      details: error.message,
+      paths: {
+        libraryPath: SFX_DIR,
+        favoritesPath: FAVORITES_FILE
+      }
+    });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 App listening at http://localhost:${PORT}`);
 });

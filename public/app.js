@@ -1053,10 +1053,12 @@ function initializeInfoModal() {
   }
 
   // Update info stats
-  function updateInfoStats() {
+  async function updateInfoStats() {
     const totalSoundsCount = document.getElementById("total-sounds-count");
     const favoritedSoundsCount = document.getElementById("favorited-sounds-count");
-    const showingSoundsCount = document.getElementById("showing-sounds-count");
+    const librarySize = document.getElementById("library-size");
+    const libraryPath = document.getElementById("library-path");
+    const favoritesPath = document.getElementById("favorites-path");
     
     if (totalSoundsCount) {
       totalSoundsCount.textContent = allSounds.length;
@@ -1066,18 +1068,61 @@ function initializeInfoModal() {
       const favoritedCount = Object.values(allFavorites).filter(Boolean).length;
       favoritedSoundsCount.textContent = favoritedCount;
     }
-    
-    if (showingSoundsCount) {
-      const soundsContainer = document.getElementById("sounds");
-      const visibleSounds = soundsContainer ? soundsContainer.children.length : 0;
-      showingSoundsCount.textContent = visibleSounds;
+
+    // Fetch library information from server
+    try {
+      const response = await fetch("/api/library-info");
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (librarySize) {
+          librarySize.textContent = data.librarySize.formatted;
+        }
+        
+        if (libraryPath) {
+          libraryPath.textContent = data.paths.libraryPath;
+        }
+        
+        if (favoritesPath) {
+          favoritesPath.textContent = data.paths.favoritesPath;
+        }
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to fetch library info:", errorData);
+        
+        if (librarySize) {
+          librarySize.textContent = "Error loading";
+        }
+        
+        if (libraryPath && errorData.paths?.libraryPath) {
+          libraryPath.textContent = errorData.paths.libraryPath;
+        }
+        
+        if (favoritesPath && errorData.paths?.favoritesPath) {
+          favoritesPath.textContent = errorData.paths.favoritesPath;
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching library info:", error);
+      
+      if (librarySize) {
+        librarySize.textContent = "Error loading";
+      }
+      
+      if (libraryPath) {
+        libraryPath.textContent = "Error loading path";
+      }
+      
+      if (favoritesPath) {
+        favoritesPath.textContent = "Error loading path";
+      }
     }
   }
 
   // Open info modal
-  function openInfoModal() {
-    updateInfoStats();
+  async function openInfoModal() {
     infoModal.style.display = "flex";
+    await updateInfoStats();
     
     // Add escape key handler
     const handleEscape = (event) => {

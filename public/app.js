@@ -5,7 +5,7 @@ fetch("/api/sounds")
   })
   .then(files => {
     const container = document.getElementById("sounds");
-    container.innerHTML = ""; // clear loading text
+    container.innerHTML = "";
 
     if (!files.length) {
       container.innerHTML = "<p>No MP3s found 😢</p>";
@@ -14,10 +14,10 @@ fetch("/api/sounds")
 
     files.forEach(file => {
       const div = document.createElement("div");
+      div.className = "sound-item";
       div.innerHTML = `
-        <p><strong>${file}</strong></p>
-        <audio controls src="/sfx/${encodeURIComponent(file)}"></audio>
-        <hr/>
+        <p>${file}</p>
+        <audio controls preload="none" src="/sfx/${encodeURIComponent(file)}"></audio>
       `;
       container.appendChild(div);
     });

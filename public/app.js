@@ -796,13 +796,32 @@ function displaySearchResults(results) {
 // Search functionality
 function initializeSearch() {
   const searchInput = document.getElementById("search-input");
+  const searchClear = document.getElementById("search-clear");
   const heartFilter = document.getElementById("heart-filter");
   
   // Check if elements exist
-  if (!searchInput || !heartFilter) {
+  if (!searchInput || !heartFilter || !searchClear) {
     console.error("Search elements not found");
     return;
   }
+  
+  // Function to toggle clear button visibility
+  function toggleClearButton() {
+    if (searchInput.value.trim() !== '') {
+      searchClear.style.display = 'flex';
+    } else {
+      searchClear.style.display = 'none';
+    }
+  }
+  
+  // Clear button click handler
+  searchClear.addEventListener("click", (e) => {
+    e.preventDefault();
+    searchInput.value = '';
+    searchClear.style.display = 'none';
+    searchInput.focus();
+    refreshResults();
+  });
   
   // Heart filter functionality
   heartFilter.addEventListener("click", (e) => {
@@ -812,6 +831,7 @@ function initializeSearch() {
   
   // Search input handler
   searchInput.addEventListener("input", (e) => {
+    toggleClearButton();
     refreshResults();
   });
   

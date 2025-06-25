@@ -1,4 +1,7 @@
+
+
 body {
+  overscroll-behavior: none;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   color: #2c3e50;
@@ -34,6 +37,7 @@ body {
   backdrop-filter: blur(10px);
   position: relative;
   overflow: hidden;
+  user-select: none;
 }
 
 .upload-toggle::before, .heart-filter::before, .search-toggle::before {
@@ -97,6 +101,11 @@ body {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   backdrop-filter: blur(15px);
   overflow: hidden;
+  input:focus,
+  textarea:focus {
+    outline: none;
+    box-shadow: none;
+  }
 }
 
 .search-bar.active {
@@ -224,10 +233,11 @@ h1 {
 .sound-title {
   margin-bottom: 1rem;
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   word-break: break-word;
   color: #2c3e50;
   letter-spacing: -0.02em;
+  /* user-select: none; */
 }
 
 .custom-player {
@@ -251,6 +261,7 @@ h1 {
   justify-content: center;
   min-width: 48px;
   height: 48px;
+  user-select: none;
 }
 
 .play-btn:hover {
@@ -267,6 +278,7 @@ h1 {
   height: 18px;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
 }
 
 .favorite-btn, .download-btn {
@@ -321,6 +333,7 @@ h1 {
   font-weight: 500;
   color: #7f8c8d;
   font-variant-numeric: tabular-nums;
+  user-select: none;
 }
 
 /* Mobile responsive adjustments */
@@ -343,6 +356,7 @@ h1 {
   .upload-icon, .heart-filter-icon, .search-icon {
     width: 20px;
     height: 20px;
+    user-select: none;
   }
   
   .search-bar {

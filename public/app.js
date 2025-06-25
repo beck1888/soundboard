@@ -776,9 +776,198 @@ function initializeUpload() {
   const fileUploadArea = document.querySelector(".file-upload-area");
   const fileUploadText = document.querySelector(".file-upload-text");
   
+  // Preview functionality variables
+  let previewAudio = null;
+  let previewContainer = null;
+  let isPreviewPlaying = false;
+  
   if (!uploadToggle || !uploadModal) {
     console.error("Upload elements not found");
     return;
+  }
+
+  // Create preview player UI
+  function createPreviewPlayer() {
+    if (previewContainer) {
+      previewContainer.remove();
+    }
+    
+    previewContainer = document.createElement('div');
+    previewContainer.className = 'preview-player';
+    previewContainer.style.cssText = `
+      margin-top: 12px;
+      padding: 12px;
+      background: rgba(74, 144, 226, 0.1);
+      border: 1px solid rgba(74, 144, 226, 0.3);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    `;
+    
+    previewContainer.innerHTML = `
+      <button type="button" class="preview-play-btn" style="
+        background: #4a90e2;
+        border: none;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      ">
+        <img src='/fluentui-system-icons/play.svg' alt='Play preview' style='width: 18px; height: 18px; filter: invert(1);'>
+      </button>
+      <div class="preview-info" style="flex: 1; min-width: 0;">
+        <div class="preview-progress" style="
+          width: 100%;
+          height: 4px;
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 2px;
+          margin-bottom: 4px;
+          cursor: pointer;
+        ">
+          <div class="preview-progress-bar" style="
+            width: 0%;
+            height: 100%;
+            background: #4a90e2;
+            border-radius: 2px;
+            transition: width 0.1s ease;
+          "></div>
+        </div>
+        <div class="preview-time" style="
+          font-size: 12px;
+          color: #666;
+        ">0:00</div>
+      </div>
+      <span class="preview-label" style="
+        font-size: 12px;
+        color: #4a90e2;
+        font-weight: 500;
+      ">Preview</span>
+    `;
+    
+    // Insert after file upload area
+    fileUploadArea.parentNode.insertBefore(previewContainer, fileUploadArea.nextSibling);
+    
+    return previewContainer;
+  }
+
+  // Setup preview player functionality
+  function setupPreviewPlayer(file) {
+    if (previewAudio) {
+      previewAudio.pause();
+      previewAudio = null;
+    }
+    
+    const container = createPreviewPlayer();
+    const playBtn = container.querySelector('.preview-play-btn');
+    const progressBar = container.querySelector('.preview-progress-bar');
+    const progressContainer = container.querySelector('.preview-progress');
+    const timeDisplay = container.querySelector('.preview-time');
+    
+    // Create audio object with file URL
+    const fileURL = URL.createObjectURL(file);
+    previewAudio = new Audio(fileURL);
+    previewAudio.preload = 'metadata';
+    
+    let duration = 0;
+    let animationId = null;
+    
+    // Load duration when metadata is available
+    previewAudio.addEventListener('loadedmetadata', () => {
+      duration = previewAudio.duration;
+      timeDisplay.textContent = formatTime(duration);
+    });
+    
+    // Update progress during playback
+    function updatePreviewProgress() {
+      if (isPreviewPlaying && !previewAudio.paused) {
+        if (duration > 0) {
+          const percent = (previewAudio.currentTime / duration) * 100;
+          progressBar.style.width = `${percent}%`;
+          timeDisplay.textContent = `${formatTime(previewAudio.currentTime)} / ${formatTime(duration)}`;
+        }
+        animationId = requestAnimationFrame(updatePreviewProgress);
+      }
+    }
+    
+    // Play/pause button
+    playBtn.addEventListener('click', () => {
+      if (isPreviewPlaying) {
+        previewAudio.pause();
+      } else {
+        previewAudio.play();
+      }
+    });
+    
+    // Audio event listeners
+    previewAudio.addEventListener('play', () => {
+      isPreviewPlaying = true;
+      playBtn.innerHTML = "<img src='/fluentui-system-icons/pause.svg' alt='Pause preview' style='width: 18px; height: 18px; filter: invert(1);'>";
+      playBtn.style.background = '#e74c3c';
+      if (animationId) cancelAnimationFrame(animationId);
+      updatePreviewProgress();
+    });
+    
+    previewAudio.addEventListener('pause', () => {
+      isPreviewPlaying = false;
+      playBtn.innerHTML = "<img src='/fluentui-system-icons/play.svg' alt='Play preview' style='width: 18px; height: 18px; filter: invert(1);'>";
+      playBtn.style.background = '#4a90e2';
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+      timeDisplay.textContent = `${formatTime(previewAudio.currentTime)} / ${formatTime(duration)}`;
+    });
+    
+    previewAudio.addEventListener('ended', () => {
+      isPreviewPlaying = false;
+      playBtn.innerHTML = "<img src='/fluentui-system-icons/play.svg' alt='Play preview' style='width: 18px; height: 18px; filter: invert(1);'>";
+      playBtn.style.background = '#4a90e2';
+      progressBar.style.width = '0%';
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+      timeDisplay.textContent = formatTime(duration);
+    });
+    
+    // Progress bar click to seek
+    progressContainer.addEventListener('click', (e) => {
+      if (duration > 0) {
+        const rect = progressContainer.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const percent = x / rect.width;
+        previewAudio.currentTime = percent * duration;
+      }
+    });
+    
+    // Cleanup function
+    container._cleanup = () => {
+      if (previewAudio) {
+        previewAudio.pause();
+        URL.revokeObjectURL(fileURL);
+        previewAudio = null;
+      }
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+      isPreviewPlaying = false;
+    };
+  }
+
+  // Remove preview player
+  function removePreviewPlayer() {
+    if (previewContainer) {
+      if (previewContainer._cleanup) {
+        previewContainer._cleanup();
+      }
+      previewContainer.remove();
+      previewContainer = null;
+    }
   }
 
   // Update file upload text when file is selected
@@ -922,24 +1111,31 @@ function initializeUpload() {
     
     const files = e.dataTransfer.files;
     if (files.length > 0) {
-      soundFileInput.files = files;
-      updateFileUploadText(files[0].name);
-      
-      // Auto-generate filename if name input is empty
-      if (!soundNameInput.value.trim()) {
-        const fileName = files[0].name;
-        const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
-        soundNameInput.value = nameWithoutExt;
+      // Check if file is audio
+      const file = files[0];
+      if (file.type.startsWith('audio/') || file.name.toLowerCase().endsWith('.mp3')) {
+        soundFileInput.files = files;
+        updateFileUploadText(file.name);
+        setupPreviewPlayer(file);
+        
+        // Auto-generate filename if name input is empty
+        if (!soundNameInput.value.trim()) {
+          const fileName = file.name;
+          const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
+          soundNameInput.value = nameWithoutExt;
+        }
+        
+        // Update validation state after file drop
+        updateValidationState();
+        
+        // Focus the sound name input after file drop
+        setTimeout(() => {
+          soundNameInput.focus();
+          soundNameInput.select();
+        }, 100);
+      } else {
+        alert('Please select an audio file (.mp3, .wav, .ogg, etc.)');
       }
-      
-      // Update validation state after file drop
-      updateValidationState();
-      
-      // Focus the sound name input after file drop
-      setTimeout(() => {
-        soundNameInput.focus();
-        soundNameInput.select();
-      }, 100);
     }
   });
   
@@ -969,24 +1165,33 @@ function initializeUpload() {
   // Auto-generate filename from file selection
   soundFileInput.addEventListener("change", (e) => {
     if (e.target.files.length > 0) {
-      const fileName = e.target.files[0].name;
-      updateFileUploadText(fileName);
+      const file = e.target.files[0];
       
-      if (!soundNameInput.value.trim()) {
-        const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
-        soundNameInput.value = nameWithoutExt;
+      // Check if file is audio
+      if (file.type.startsWith('audio/') || file.name.toLowerCase().endsWith('.mp3')) {
+        updateFileUploadText(file.name);
+        setupPreviewPlayer(file);
+        
+        if (!soundNameInput.value.trim()) {
+          const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
+          soundNameInput.value = nameWithoutExt;
+        }
+        
+        // Update validation state after file selection
+        updateValidationState();
+        
+        // Focus the sound name input after file selection
+        setTimeout(() => {
+          soundNameInput.focus();
+          soundNameInput.select();
+        }, 100);
+      } else {
+        alert('Please select an audio file (.mp3, .wav, .ogg, etc.)');
+        soundFileInput.value = ''; // Clear the invalid file
       }
-      
-      // Update validation state after file selection
-      updateValidationState();
-      
-      // Focus the sound name input after file selection
-      setTimeout(() => {
-        soundNameInput.focus();
-        soundNameInput.select();
-      }, 100);
     } else {
       updateFileUploadText(null);
+      removePreviewPlayer();
       // Update validation state when file is removed
       updateValidationState();
     }
@@ -1018,6 +1223,7 @@ function initializeUpload() {
     // Reset form and UI
     uploadForm.reset();
     updateFileUploadText(null);
+    removePreviewPlayer();
     uploadProgress.style.display = "none";
     uploadForm.style.display = "flex";
     
@@ -1037,6 +1243,7 @@ function initializeUpload() {
     uploadModal.style.display = "none";
     uploadToggle.classList.remove("active");
     uploadForm.reset();
+    removePreviewPlayer();
     uploadProgress.style.display = "none";
     uploadForm.style.display = "flex";
     

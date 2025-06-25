@@ -35,6 +35,12 @@ body {
   margin: 0 2rem;
 }
 
+.header-buttons-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .upload-toggle, .heart-filter, .search-toggle, .info-button {
   background: white;
   border: 1px solid #ddd;

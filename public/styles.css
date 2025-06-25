@@ -889,6 +889,20 @@ html {
   font-weight: bold;
 }
 
+.input-warning {
+  color: #ff9500;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.input-warning::before {
+  content: "⚠";
+  font-weight: bold;
+}
+
 .file-upload-area {
   position: relative;
   display: flex;

@@ -783,6 +783,12 @@ function initializeUpload() {
     return validPattern.test(name);
   }
 
+  // Function to check if file name already exists
+  function fileNameExists(name) {
+    const nameWithExtension = name + '.mp3';
+    return allSounds.some(sound => sound.toLowerCase() === nameWithExtension.toLowerCase());
+  }
+
   // Function to update validation state
   function updateValidationState() {
     const soundNameError = document.getElementById("sound-name-error");
@@ -797,8 +803,18 @@ function initializeUpload() {
       soundNameInput.classList.add('error');
       soundNameError.textContent = 'Your title can only contain letters, numbers, spaces, hyphens, and underscores';
       soundNameError.style.display = 'block';
+      soundNameError.className = 'input-error'; // Red error
       isValid = false;
-    } else {
+    } 
+    // Check if file name already exists
+    else if (currentValue && fileNameExists(currentValue)) {
+      soundNameInput.classList.add('error');
+      soundNameError.textContent = 'A sound with this name already exists. Please choose a different name.';
+      soundNameError.style.display = 'block';
+      soundNameError.className = 'input-warning'; // Orange warning
+      isValid = false;
+    } 
+    else {
       soundNameInput.classList.remove('error');
       soundNameError.style.display = 'none';
     }

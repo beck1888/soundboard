@@ -1000,7 +1000,7 @@ html {
 
 .upload-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #007aff, #34c759);
+  background: #007aff;
   width: 0%;
   transition: width 0.3s ease;
   border-radius: 6px;

@@ -962,10 +962,8 @@ function initializeUpload() {
       uploadProgressText.textContent = `Upload failed: ${error.message}`;
       uploadProgressFill.style.width = "0%";
       
-      setTimeout(() => {
-        uploadForm.style.display = "flex";
-        uploadProgress.style.display = "none";
-      }, 2000);
+      // Keep error message visible - don't auto-hide on failure
+      // User can manually close the modal or try again
     }
   }
 }

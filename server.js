@@ -164,10 +164,10 @@ function stripMetadataExceptTitle(inputPath, outputPath, title) {
         '-map', '0:a', // Copy audio stream
         '-c:a', 'copy', // Don't re-encode audio (faster)
         '-map_metadata', '-1', // Remove all metadata
-        '-metadata', `title=${title}`, // Add back only the title
         '-write_id3v1', '0', // Don't write ID3v1 tags
         '-write_id3v2', '1' // Write minimal ID3v2 tags
       ])
+      .addOption('-metadata', `title=${title}`) // Use addOption for proper escaping
       .output(outputPath)
       .on('end', () => {
         console.log('✅ Metadata stripped successfully');
@@ -191,10 +191,10 @@ function convertToMp3WithCleanMetadata(inputPath, outputPath, title) {
       .audioFrequency(44100) // Standard sample rate
       .outputOptions([
         '-map_metadata', '-1', // Remove all metadata
-        '-metadata', `title=${title}`, // Add back only the title
         '-write_id3v1', '0', // Don't write ID3v1 tags
         '-write_id3v2', '1' // Write minimal ID3v2 tags
       ])
+      .addOption('-metadata', `title=${title}`) // Use addOption for proper escaping
       .output(outputPath)
       .on('progress', (progress) => {
         console.log(`🔄 Converting: ${Math.round(progress.percent || 0)}%`);

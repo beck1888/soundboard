@@ -4,6 +4,7 @@ const path = require("path");
 const multer = require("multer");
 const ffmpeg = require("fluent-ffmpeg");
 const ffmpegStatic = require("ffmpeg-static");
+const os = require("os");
 
 // Set ffmpeg path
 ffmpeg.setFfmpegPath(ffmpegStatic);
@@ -11,11 +12,44 @@ ffmpeg.setFfmpegPath(ffmpegStatic);
 const app = express();
 const PORT = 3000;
 
-// 👇 CHANGE THIS to your actual sound folder path
-const SFX_DIR = path.resolve("/Users/beckorion/Documents/Developer/Web/soundboard/sfx");
-const FAVORITES_FILE = path.resolve("/Users/beckorion/Documents/Developer/Web/soundboard/user_storage/favorites.json");
+// Function to load configuration from config.json
+function loadConfig() {
+  try {
+    const configPath = path.join(__dirname, "public", "config.json");
+    const configData = fs.readFileSync(configPath, "utf8");
+    const config = JSON.parse(configData);
+    
+    // Expand tilde (~) to home directory
+    const expandPath = (filePath) => {
+      if (filePath.startsWith("~/")) {
+        return path.join(os.homedir(), filePath.slice(2));
+      }
+      return filePath;
+    };
+    
+    return {
+      sfxDir: path.resolve(expandPath(config.soundEffectDirFilePath)),
+      favoritesFile: path.resolve(expandPath(config.stateDataFilePath))
+    };
+  } catch (err) {
+    console.error("❌ Error loading config.json:", err.message);
+    console.log("🔄 Falling back to default paths...");
+    
+    // Fallback to default paths
+    return {
+      sfxDir: path.resolve(__dirname, "sfx"),
+      favoritesFile: path.resolve(__dirname, "user_storage", "favorites.json")
+    };
+  }
+}
 
-console.log("🎯 Looking for files in:", SFX_DIR);
+// Load configuration
+const config = loadConfig();
+const SFX_DIR = config.sfxDir;
+const FAVORITES_FILE = config.favoritesFile;
+
+console.log("📁 Looking for audio files in:", SFX_DIR);
+console.log("📝 Recording favorites in:", FAVORITES_FILE);
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -71,12 +105,17 @@ function loadFavorites() {
   try {
     if (fs.existsSync(FAVORITES_FILE)) {
       const data = fs.readFileSync(FAVORITES_FILE, 'utf8');
-      return JSON.parse(data);
+      try {
+        return JSON.parse(data);
+      } catch (parseErr) {
+        console.error("❌ Invalid JSON in favorites file:", parseErr.message);
+        return null; // Signal JSON parse error
+      }
     }
     return {};
   } catch (err) {
-    console.error("Error loading favorites:", err);
-    return {};
+    console.error("❌ Error accessing favorites file:", err.message);
+    return null; // Signal file access error
   }
 }
 
@@ -267,19 +306,60 @@ app.post("/api/upload", upload.single('soundFile'), async (req, res) => {
 
 // List MP3s with favorites
 app.get("/api/sounds", (req, res) => {
+  // Check if SFX directory exists
+  if (!fs.existsSync(SFX_DIR)) {
+    console.error("🚨 Sound directory does not exist:", SFX_DIR);
+    return res.status(500).json({ 
+      error: "DIRECTORY_NOT_FOUND",
+      message: "Sound effects directory does not exist",
+      path: SFX_DIR,
+      configPath: path.join(__dirname, "public", "config.json")
+    });
+  }
+
+  // Check if directory is accessible
+  try {
+    fs.accessSync(SFX_DIR, fs.constants.R_OK);
+  } catch (accessErr) {
+    console.error("🚨 Cannot access sound directory:", accessErr.message);
+    return res.status(500).json({ 
+      error: "DIRECTORY_ACCESS_DENIED",
+      message: "Cannot access sound effects directory",
+      path: SFX_DIR,
+      details: accessErr.message
+    });
+  }
+
   fs.readdir(SFX_DIR, (err, files) => {
     if (err) {
       console.error("🚨 Failed to read sound directory:", err.message);
-      return res.status(500).json({ error: "Error reading sound directory" });
+      return res.status(500).json({ 
+        error: "DIRECTORY_READ_ERROR",
+        message: "Error reading sound directory",
+        path: SFX_DIR,
+        details: err.message
+      });
     }
 
     const mp3s = files.filter(file => file.toLowerCase().endsWith(".mp3"));
     let favorites = loadFavorites();
     
+    // Check for favorites loading error
+    if (favorites === null) {
+      return res.status(500).json({ 
+        error: "FAVORITES_FILE_ERROR",
+        message: "Error loading favorites file",
+        path: FAVORITES_FILE,
+        configPath: path.join(__dirname, "public", "config.json")
+      });
+    }
+    
     // Sync favorites with current sounds
     const updated = syncFavoritesWithSounds(mp3s, favorites);
     if (updated) {
-      saveFavorites(favorites);
+      if (!saveFavorites(favorites)) {
+        console.warn("⚠️ Failed to save updated favorites");
+      }
     }
     
     res.json({ sounds: mp3s, favorites });

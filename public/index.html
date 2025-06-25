@@ -27,10 +27,29 @@
     <div class="spinner"></div>
     <p>Loading sounds...</p>
   </div>
+  
+  <!-- Critical Error Screen -->
+  <div id="critical-error" class="critical-error-screen" style="display: none;">
+    <div class="critical-error-content">
+      <img src="/fluentui-system-icons/critical-error.svg" alt="Critical Error" class="critical-error-icon">
+      <h1 class="critical-error-title">Configuration Error</h1>
+      <p id="critical-error-message" class="critical-error-message"></p>
+      <div id="critical-error-details" class="critical-error-details"></div>
+      <button id="retry-button" class="retry-button">Retry</button>
+    </div>
+  </div>
+  
   <div id="sounds" style="display: none;"></div>
   <div id="no-results" class="no-results" style="display: none;">
     <img src="/fluentui-system-icons/broken-heart.svg" alt="No results found" class="no-results-image">
     <p>No results</p>
+  </div>
+  
+  <!-- Empty Directory Screen -->
+  <div id="empty-directory" class="empty-directory-screen" style="display: none;">
+    <img src="/fluentui-system-icons/box.svg" alt="Empty folder" class="empty-directory-icon">
+    <h2>No Audio Files Found</h2>
+    <p>The sound effects directory is empty. Upload some audio files to get started!</p>
   </div>
   
   <!-- Upload Modal -->

@@ -476,6 +476,16 @@ async function loadSounds() {
   const loadingScreen = document.getElementById("loading");
   const soundsContainer = document.getElementById("sounds");
   const searchContainer = document.querySelector(".search-container");
+  const criticalErrorScreen = document.getElementById("critical-error");
+  const emptyDirectoryScreen = document.getElementById("empty-directory");
+  const noResultsContainer = document.getElementById("no-results");
+  
+  // Hide all screens initially
+  loadingScreen.style.display = "flex";
+  soundsContainer.style.display = "none";
+  if (criticalErrorScreen) criticalErrorScreen.style.display = "none";
+  if (emptyDirectoryScreen) emptyDirectoryScreen.style.display = "none";
+  if (noResultsContainer) noResultsContainer.style.display = "none";
   
   // Hide search container buttons during loading
   if (searchContainer) {
@@ -484,59 +494,56 @@ async function loadSounds() {
   
   try {
     const response = await fetch("/api/sounds");
-    if (!response.ok) throw new Error("API request failed");
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      showCriticalError(errorData);
+      return;
+    }
     
     const data = await response.json();
-    
-    const { sounds, favorites } = data;
-    
-    // Add 5-second delay before hiding loading screen
-    // await new Promise(resolve => setTimeout(resolve, 5000));
-    
-    // Hide loading screen and show sounds container
+    allSounds = data.sounds;
+    allFavorites = data.favorites;
+
     loadingScreen.style.display = "none";
-    soundsContainer.style.display = "block";
     
-    // Show search container buttons after loading
+    // Check if directory is empty
+    if (allSounds.length === 0) {
+      showEmptyDirectory();
+      return;
+    }
+    
+    // Show normal UI
+    soundsContainer.style.display = "block";
     if (searchContainer) {
       searchContainer.style.display = "flex";
     }
     
-    if (!sounds.length) {
-      soundsContainer.innerHTML = "<p>No MP3s found 😢</p>";
-      return;
-    }
-
     // Clear container and populate with sounds
     soundsContainer.innerHTML = "";
     
-    sounds.forEach(file => {
-      const isFavorite = favorites[file] || false;
-      const soundItem = createSoundItem(file, isFavorite);
+    // Group favorites and non-favorites
+    const favorites = allSounds.filter(sound => allFavorites[sound]);
+    const nonFavorites = allSounds.filter(sound => !allFavorites[sound]);
+    
+    // Display favorites first, then non-favorites
+    [...favorites, ...nonFavorites].forEach(sound => {
+      const isFavorite = allFavorites[sound] || false;
+      const soundItem = createSoundItem(sound, isFavorite);
       soundsContainer.appendChild(soundItem);
     });
     
-    // Store globally for search functionality
-    allSounds = sounds;
-    allFavorites = favorites;
-    
-    // Initialize search functionality
+    // Initialize search after sounds are loaded
     initializeSearch();
-    
-    // Initialize upload functionality
     initializeUpload();
     
   } catch (err) {
-    console.error("Failed to fetch sounds:", err);
-    loadingScreen.style.display = "none";
-    soundsContainer.style.display = "block";
-    soundsContainer.innerHTML = "<p>Failed to load sounds 🫠</p>";
-    
-    // Show search container buttons even if loading failed
-    const searchContainer = document.querySelector(".search-container");
-    if (searchContainer) {
-      searchContainer.style.display = "flex";
-    }
+    console.error("Network error:", err);
+    showCriticalError({
+      error: "NETWORK_ERROR",
+      message: "Failed to connect to the server",
+      details: err.message
+    });
   }
 }
 
@@ -920,5 +927,109 @@ function initializeUpload() {
   }
 }
 
+// Error handling functions
+function showCriticalError(errorData) {
+  const loadingScreen = document.getElementById("loading");
+  const criticalErrorScreen = document.getElementById("critical-error");
+  const criticalErrorMessage = document.getElementById("critical-error-message");
+  const criticalErrorDetails = document.getElementById("critical-error-details");
+  const searchContainer = document.querySelector(".search-container");
+  
+  loadingScreen.style.display = "none";
+  if (searchContainer) {
+    searchContainer.style.display = "none";
+  }
+  
+  let message = "";
+  let details = "";
+  
+  switch (errorData.error) {
+    case "DIRECTORY_NOT_FOUND":
+      message = "The sound effects directory could not be found. Please check your configuration.";
+      details = `
+        <h4>What to do:</h4>
+        <p>1. Create the directory: <code>${errorData.path}</code></p>
+        <p>2. Or update the path in: <code>${errorData.configPath}</code></p>
+        <p>3. Restart the server after making changes</p>
+      `;
+      break;
+      
+    case "DIRECTORY_ACCESS_DENIED":
+      message = "Cannot access the sound effects directory. Please check permissions.";
+      details = `
+        <h4>What to do:</h4>
+        <p>1. Check folder permissions for: <code>${errorData.path}</code></p>
+        <p>2. Make sure the server has read/write access</p>
+        <p>3. Error details: ${errorData.details}</p>
+      `;
+      break;
+      
+    case "DIRECTORY_READ_ERROR":
+      message = "An error occurred while reading the sound effects directory.";
+      details = `
+        <h4>What to do:</h4>
+        <p>1. Check if the directory exists: <code>${errorData.path}</code></p>
+        <p>2. Verify folder permissions</p>
+        <p>3. Error details: ${errorData.details}</p>
+      `;
+      break;
+      
+    case "FAVORITES_FILE_ERROR":
+      message = "The favorites file is corrupted or cannot be accessed.";
+      details = `
+        <h4>What to do:</h4>
+        <p>1. Check if file exists: <code>${errorData.path}</code></p>
+        <p>2. If corrupted, delete it (will be recreated as <code>{}</code>)</p>
+        <p>3. Or update the path in: <code>${errorData.configPath}</code></p>
+      `;
+      break;
+      
+    case "NETWORK_ERROR":
+      message = "Could not connect to the server. Please check if the server is running.";
+      details = `
+        <h4>What to do:</h4>
+        <p>1. Make sure the server is running on port 3000</p>
+        <p>2. Check your internet connection</p>
+        <p>3. Try refreshing the page</p>
+      `;
+      break;
+      
+    default:
+      message = errorData.message || "An unknown error occurred.";
+      details = `
+        <h4>Error details:</h4>
+        <p>${errorData.details || "No additional details available"}</p>
+      `;
+  }
+  
+  criticalErrorMessage.textContent = message;
+  criticalErrorDetails.innerHTML = details;
+  criticalErrorScreen.style.display = "flex";
+}
+
+function showEmptyDirectory() {
+  const emptyDirectoryScreen = document.getElementById("empty-directory");
+  const searchContainer = document.querySelector(".search-container");
+  
+  // Show empty directory screen and search container (for upload button)
+  emptyDirectoryScreen.style.display = "flex";
+  if (searchContainer) {
+    searchContainer.style.display = "flex";
+  }
+  
+  // Initialize upload functionality even when empty
+  initializeUpload();
+}
+
 // Load sounds when page loads
 loadSounds();
+
+// Initialize retry button functionality
+document.addEventListener("DOMContentLoaded", function() {
+  const retryButton = document.getElementById("retry-button");
+  if (retryButton) {
+    retryButton.addEventListener("click", function() {
+      location.reload(); // Simple page reload to retry
+    });
+  }
+});

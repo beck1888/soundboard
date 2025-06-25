@@ -42,6 +42,9 @@ function createSoundItem(file, isFavorite) {
       <button class="play-btn"><img src='/play.svg' alt='Play' style='width: 20px; height: 20px;'></button>
       <div class="progress"><div class="progress-bar"></div></div>
       <div class="time">0:00</div>
+      <button class="download-btn" title="Download file">
+        <img src='/download.svg' alt='Download'>
+      </button>
       <button class="favorite-btn" title="Toggle favorite">
         <img src='/${isFavorite ? 'heart_on.svg' : 'heart_off.svg'}' alt='${isFavorite ? 'Favorited' : 'Not favorited'}'>
       </button>
@@ -55,10 +58,36 @@ function createSoundItem(file, isFavorite) {
   const progress = div.querySelector(".progress");
   const progressBar = div.querySelector(".progress-bar");
   const timeText = div.querySelector(".time");
+  const downloadBtn = div.querySelector(".download-btn");
   const favoriteBtn = div.querySelector(".favorite-btn");
 
   let isPlaying = false;
   let animationId = null;
+
+  // Download button functionality
+  downloadBtn.addEventListener("click", async () => {
+    try {
+      const response = await fetch(`/sfx/${encodeURIComponent(file)}`);
+      if (!response.ok) throw new Error(`Failed to fetch ${file}`);
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create a temporary download link
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(`Failed to download ${file}:`, err);
+      alert(`Failed to download ${file}. Please try again.`);
+    }
+  });
 
   // Favorite button functionality
   favoriteBtn.addEventListener("click", async () => {

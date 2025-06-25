@@ -209,6 +209,27 @@ h1 {
   background: #f0f0f0;
 }
 
+.download-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+  display: flex;
+  align-items: center;
+  margin-left: 0.5rem;
+}
+
+.download-btn img {
+  width: 16px;
+  height: 16px;
+}
+
+.download-btn:hover {
+  background: #f0f0f0;
+}
+
 .custom-player {
   display: flex;
   align-items: center;

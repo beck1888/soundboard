@@ -221,7 +221,37 @@ h1 {
   word-break: break-word;
   color: #2c3e50;
   letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   /* user-select: none; */
+}
+
+.more-menu-btn {
+  background: transparent;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sound-item:hover .more-menu-btn {
+  opacity: 0.6;
+}
+
+.more-menu-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  opacity: 1 !important;
+}
+
+.more-menu-btn:active {
+  transform: scale(0.95);
 }
 
 .custom-player {

@@ -41,6 +41,9 @@ function createSoundItem(file, isFavorite) {
   div.innerHTML = `
     <div class="sound-title">
       <span class="filename">${displayName}</span>
+      <button class="more-menu-btn" title="More options">
+        <img src='/fluentui-system-icons/more-menu.svg' alt='More options' style='width: 16px; height: 16px;'>
+      </button>
     </div>
     <div class="custom-player">
       <button class="play-btn"><img src='/fluentui-system-icons/play.svg' alt='Play' style='width: 20px; height: 20px;'></button>
@@ -71,14 +74,13 @@ function createSoundItem(file, isFavorite) {
   const contextMenu = div.querySelector(".context-menu");
   const renameBtn = div.querySelector(".rename-btn");
   const deleteBtn = div.querySelector(".delete-btn");
+  const moreMenuBtn = div.querySelector(".more-menu-btn");
 
   let isPlaying = false;
   let animationId = null;
 
-  // Right-click menu functionality
-  div.addEventListener("contextmenu", (e) => {
-    e.preventDefault();
-
+  // Shared function to open context menu
+  const openContextMenu = () => {
     // Close any other open context menus first
     document.querySelectorAll('.sound-item').forEach(item => {
       if (item !== div) {
@@ -113,6 +115,19 @@ function createSoundItem(file, isFavorite) {
     div._closeContextMenu = closeContextMenu;
     
     document.addEventListener("keydown", handleKeyDown);
+  };
+
+  // More menu button functionality
+  moreMenuBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openContextMenu();
+  });
+
+  // Right-click menu functionality
+  div.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    openContextMenu();
   });
 
   // Close context menu when clicking anywhere

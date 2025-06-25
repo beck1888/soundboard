@@ -79,19 +79,52 @@ function createSoundItem(file, isFavorite) {
   div.addEventListener("contextmenu", (e) => {
     e.preventDefault();
 
+    // Close any other open context menus first
+    document.querySelectorAll('.sound-item').forEach(item => {
+      if (item !== div) {
+        const otherMenu = item.querySelector('.context-menu');
+        if (otherMenu) {
+          otherMenu.style.display = "none";
+          item.classList.remove("blurred");
+        }
+      }
+    });
+
     // Add blur effect to the sound content
     div.classList.add("blurred");
     
     // Show the context menu overlay
     contextMenu.style.display = "flex";
+    
+    // Add keyboard navigation
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        closeContextMenu();
+      }
+    };
+    
+    const closeContextMenu = () => {
+      contextMenu.style.display = "none";
+      div.classList.remove("blurred");
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+    
+    // Store the close function for other event handlers
+    div._closeContextMenu = closeContextMenu;
+    
+    document.addEventListener("keydown", handleKeyDown);
   });
 
   // Close context menu when clicking anywhere
   document.addEventListener("click", (e) => {
     // Only close if clicking outside the current sound item or on the sound item but not on the context menu
     if (!div.contains(e.target) || (div.contains(e.target) && !contextMenu.contains(e.target))) {
-      contextMenu.style.display = "none";
-      div.classList.remove("blurred");
+      if (div._closeContextMenu) {
+        div._closeContextMenu();
+      } else {
+        contextMenu.style.display = "none";
+        div.classList.remove("blurred");
+      }
     }
   });
 
@@ -105,8 +138,12 @@ function createSoundItem(file, isFavorite) {
     e.stopPropagation();
     
     // Hide context menu and remove blur
-    contextMenu.style.display = "none";
-    div.classList.remove("blurred");
+    if (div._closeContextMenu) {
+      div._closeContextMenu();
+    } else {
+      contextMenu.style.display = "none";
+      div.classList.remove("blurred");
+    }
     
     const modal = document.getElementById("rename-modal");
     const modalInput = document.getElementById("rename-input");
@@ -124,18 +161,35 @@ function createSoundItem(file, isFavorite) {
 
     // Center modal by using flex display (matches CSS)
     modal.style.display = "flex";
-    modalInput.focus();
+    
+    // Focus input after a brief delay to ensure modal is visible
+    setTimeout(() => {
+      modalInput.focus();
+      modalInput.select();
+    }, 100);
 
     // Function to close modal
     const closeModal = () => {
       modal.style.display = "none";
+      // Remove escape key listener
+      document.removeEventListener("keydown", escapeHandler);
     };
+
+    // Escape key handler
+    const escapeHandler = (event) => {
+      if (event.key === "Escape") {
+        closeModal();
+      }
+    };
+
+    // Add escape key listener
+    document.addEventListener("keydown", escapeHandler);
 
     newModalCancel.addEventListener("click", closeModal);
 
     newModalConfirm.addEventListener("click", async () => {
       const newName = modalInput.value.trim();
-      if (newName) {
+      if (newName && newName !== displayName) {
         try {
           const response = await fetch(`/api/rename/${encodeURIComponent(file)}`, {
             method: "POST",
@@ -155,16 +209,15 @@ function createSoundItem(file, isFavorite) {
           console.error("Error renaming file:", err);
           alert("Error renaming file. Please try again.");
         }
-        closeModal();
       }
+      closeModal();
     });
 
-    // Close modal on Enter key
+    // Handle Enter key in input
     modalInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
+        event.preventDefault();
         newModalConfirm.click();
-      } else if (event.key === "Escape") {
-        closeModal();
       }
     });
 
@@ -180,8 +233,12 @@ function createSoundItem(file, isFavorite) {
   deleteBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     // Hide context menu and remove blur
-    contextMenu.style.display = "none";
-    div.classList.remove("blurred");
+    if (div._closeContextMenu) {
+      div._closeContextMenu();
+    } else {
+      contextMenu.style.display = "none";
+      div.classList.remove("blurred");
+    }
     
     const modal = document.getElementById("delete-modal");
     const modalCheckbox = document.getElementById("delete-checkbox");
@@ -197,10 +254,15 @@ function createSoundItem(file, isFavorite) {
     if (!modalSoundName) {
       modalSoundName = document.createElement("div");
       modalSoundName.id = "delete-sound-name";
-      modalSoundName.style.marginBottom = "8px";
-      modalSoundName.style.fontWeight = "bold";
+      modalSoundName.style.marginBottom = "12px";
+      modalSoundName.style.fontWeight = "600";
       modalSoundName.style.textAlign = "center";
-      modalSoundName.style.color = "#d32f2f";
+      modalSoundName.style.color = "#e74c3c";
+      modalSoundName.style.fontSize = "1.1rem";
+      modalSoundName.style.padding = "0.75rem";
+      modalSoundName.style.background = "rgba(231, 76, 60, 0.05)";
+      modalSoundName.style.borderRadius = "8px";
+      modalSoundName.style.border = "1px solid rgba(231, 76, 60, 0.2)";
       
       // Insert before the checkbox in the modal body
       const modalBody = modal.querySelector(".modal-body");
@@ -233,7 +295,19 @@ function createSoundItem(file, isFavorite) {
       modal.style.display = "none";
       newModalCheckbox.checked = false;
       newModalConfirm.disabled = true;
+      // Remove escape key listener
+      document.removeEventListener("keydown", escapeHandler);
     };
+    
+    // Escape key handler
+    const escapeHandler = (event) => {
+      if (event.key === "Escape") {
+        closeModal();
+      }
+    };
+
+    // Add escape key listener
+    document.addEventListener("keydown", escapeHandler);
     
     newModalCheckbox.addEventListener("change", () => {
       newModalConfirm.disabled = !newModalCheckbox.checked;
@@ -250,20 +324,28 @@ function createSoundItem(file, isFavorite) {
         });
         
         if (response.ok) {
-          div.remove();
+          // Add smooth fade-out animation
+          div.style.transition = "all 0.3s ease";
+          div.style.opacity = "0";
+          div.style.transform = "translateX(-20px)";
+          
+          setTimeout(() => {
+            div.remove();
+            
+            // If this was the last sound and we're in search/filter mode, check if we need to show "no results"
+            const remainingSounds = document.querySelectorAll('.sound-item');
+            if (remainingSounds.length === 0) {
+              const noResultsContainer = document.getElementById("no-results");
+              const soundsContainer = document.getElementById("sounds");
+              if (noResultsContainer && soundsContainer) {
+                soundsContainer.style.display = "none";
+                noResultsContainer.style.display = "flex";
+              }
+            }
+          }, 300);
+          
           closeModal();
           console.log(`🗑️ File deleted successfully: ${file}`);
-          
-          // If this was the last sound and we're in search/filter mode, check if we need to show "no results"
-          const remainingSounds = document.querySelectorAll('.sound-item');
-          if (remainingSounds.length === 0) {
-            const noResultsContainer = document.getElementById("no-results");
-            const soundsContainer = document.getElementById("sounds");
-            if (noResultsContainer && soundsContainer) {
-              soundsContainer.style.display = "none";
-              noResultsContainer.style.display = "flex";
-            }
-          }
         } else {
           const error = await response.json();
           console.error("Failed to delete file:", error.error);
@@ -279,14 +361,6 @@ function createSoundItem(file, isFavorite) {
     modal.addEventListener("click", (event) => {
       if (event.target === modal) {
         closeModal();
-      }
-    });
-    
-    // Close modal on Escape key
-    document.addEventListener("keydown", function escapeHandler(event) {
-      if (event.key === "Escape") {
-        closeModal();
-        document.removeEventListener("keydown", escapeHandler);
       }
     });
   });
@@ -318,11 +392,23 @@ function createSoundItem(file, isFavorite) {
 
   // Favorite button functionality
   favoriteBtn.addEventListener("click", async () => {
+    // Add immediate visual feedback
+    favoriteBtn.style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      favoriteBtn.style.transform = 'scale(1)';
+    }, 150);
+    
     const newFavoriteStatus = await toggleFavorite(file);
     if (newFavoriteStatus !== null) {
       const img = favoriteBtn.querySelector('img');
       img.src = `/${newFavoriteStatus ? 'heart_on.svg' : 'heart_off.svg'}`;
       img.alt = newFavoriteStatus ? 'Favorited' : 'Not favorited';
+      
+      // Add a subtle animation for the heart change
+      img.style.transform = 'scale(1.2)';
+      setTimeout(() => {
+        img.style.transform = 'scale(1)';
+      }, 200);
     }
   });
 
@@ -593,14 +679,20 @@ function initializeSearch() {
   
   // Keyboard shortcuts
   document.addEventListener("keydown", (e) => {
-    // Close search on Escape key
-    if (e.key === "Escape" && isSearchActive) {
+    // Close search on Escape key (only if no other modals are open)
+    if (e.key === "Escape" && isSearchActive && !document.querySelector('.modal[style*="flex"]') && !document.querySelector('.upload-modal[style*="flex"]')) {
       closeSearch();
     }
     
     // Open search on Cmd+F (Mac) or Ctrl+F (Windows/Linux)
-    if ((e.metaKey || e.ctrlKey) && e.key === "f" && !isSearchActive) {
+    if ((e.metaKey || e.ctrlKey) && e.key === "f" && !isSearchActive && !document.querySelector('.modal[style*="flex"]') && !document.querySelector('.upload-modal[style*="flex"]')) {
       e.preventDefault(); // Prevent browser's default find dialog
+      openSearch();
+    }
+    
+    // Quick sound search with '/' key (like GitHub, Reddit)
+    if (e.key === "/" && !isSearchActive && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault();
       openSearch();
     }
   });
@@ -610,7 +702,11 @@ function initializeSearch() {
     searchBar.style.display = "flex";
     searchBar.classList.add("active");
     searchToggle.style.display = "none";
-    searchInput.focus();
+    
+    // Focus input after a brief delay to ensure animation is smooth
+    setTimeout(() => {
+      searchInput.focus();
+    }, 100);
   }
   
   function closeSearch() {
@@ -701,21 +797,41 @@ function initializeUpload() {
     }
   });
   
-  // Keyboard shortcuts
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && uploadModal.style.display !== "none") {
-      closeUploadModal();
+  // Keyboard shortcuts and modal management
+  let escapeHandler = null;
+  
+  const setupModalEscapeHandler = () => {
+    escapeHandler = (e) => {
+      if (e.key === "Escape" && uploadModal.style.display !== "none") {
+        closeUploadModal();
+      }
+    };
+    document.addEventListener("keydown", escapeHandler);
+  };
+  
+  const removeModalEscapeHandler = () => {
+    if (escapeHandler) {
+      document.removeEventListener("keydown", escapeHandler);
+      escapeHandler = null;
     }
-  });
+  };
   
   function openUploadModal() {
     uploadModal.style.display = "flex";
     uploadToggle.classList.add("active");
-    soundNameInput.focus();
-    // Reset form
+    
+    // Reset form and UI
     uploadForm.reset();
     uploadProgress.style.display = "none";
     uploadForm.style.display = "flex";
+    
+    // Setup escape handler
+    setupModalEscapeHandler();
+    
+    // Focus the name input after a brief delay to ensure modal is visible
+    setTimeout(() => {
+      soundNameInput.focus();
+    }, 100);
   }
   
   function closeUploadModal() {
@@ -724,6 +840,9 @@ function initializeUpload() {
     uploadForm.reset();
     uploadProgress.style.display = "none";
     uploadForm.style.display = "flex";
+    
+    // Remove escape handler
+    removeModalEscapeHandler();
   }
   
   async function handleUpload() {

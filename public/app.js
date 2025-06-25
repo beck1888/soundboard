@@ -475,6 +475,12 @@ function createSoundItem(file, isFavorite) {
 async function loadSounds() {
   const loadingScreen = document.getElementById("loading");
   const soundsContainer = document.getElementById("sounds");
+  const searchContainer = document.querySelector(".search-container");
+  
+  // Hide search container buttons during loading
+  if (searchContainer) {
+    searchContainer.style.display = "none";
+  }
   
   try {
     const response = await fetch("/api/sounds");
@@ -484,9 +490,17 @@ async function loadSounds() {
     
     const { sounds, favorites } = data;
     
+    // Add 5-second delay before hiding loading screen
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    
     // Hide loading screen and show sounds container
     loadingScreen.style.display = "none";
     soundsContainer.style.display = "block";
+    
+    // Show search container buttons after loading
+    if (searchContainer) {
+      searchContainer.style.display = "flex";
+    }
     
     if (!sounds.length) {
       soundsContainer.innerHTML = "<p>No MP3s found 😢</p>";
@@ -517,6 +531,12 @@ async function loadSounds() {
     loadingScreen.style.display = "none";
     soundsContainer.style.display = "block";
     soundsContainer.innerHTML = "<p>Failed to load sounds 🫠</p>";
+    
+    // Show search container buttons even if loading failed
+    const searchContainer = document.querySelector(".search-container");
+    if (searchContainer) {
+      searchContainer.style.display = "flex";
+    }
   }
 }
 

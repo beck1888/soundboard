@@ -34,9 +34,13 @@ async function toggleFavorite(filename) {
 function createSoundItem(file, isFavorite) {
   const div = document.createElement("div");
   div.className = "sound-item";
+  
+  // Remove .mp3 extension for display
+  const displayName = file.replace(/\.mp3$/i, '');
+  
   div.innerHTML = `
     <div class="sound-title">
-      <span class="filename">${file}</span>
+      <span class="filename">${displayName}</span>
     </div>
     <div class="custom-player">
       <button class="play-btn"><img src='/play.svg' alt='Play' style='width: 20px; height: 20px;'></button>

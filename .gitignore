@@ -2,3 +2,4 @@ node_modules/
 .DS_Store
 sfx/
 user_storage/
+public/config.json

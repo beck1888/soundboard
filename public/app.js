@@ -491,7 +491,7 @@ async function loadSounds() {
     const { sounds, favorites } = data;
     
     // Add 5-second delay before hiding loading screen
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    // await new Promise(resolve => setTimeout(resolve, 5000));
     
     // Hide loading screen and show sounds container
     loadingScreen.style.display = "none";

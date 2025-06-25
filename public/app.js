@@ -198,6 +198,9 @@ async function loadSounds() {
     // Initialize search functionality
     initializeSearch();
     
+    // Initialize upload functionality
+    initializeUpload();
+    
   } catch (err) {
     console.error("Failed to fetch sounds:", err);
     loadingScreen.style.display = "none";
@@ -420,6 +423,136 @@ function initializeSearch() {
     const query = searchInput.value;
     const results = searchSounds(query);
     displaySearchResults(results);
+  }
+}
+
+// Upload functionality
+function initializeUpload() {
+  const uploadToggle = document.getElementById("upload-toggle");
+  const uploadModal = document.getElementById("upload-modal");
+  const uploadModalClose = document.getElementById("upload-modal-close");
+  const uploadCancel = document.getElementById("upload-cancel");
+  const uploadForm = document.getElementById("upload-form");
+  const soundNameInput = document.getElementById("sound-name");
+  const soundFileInput = document.getElementById("sound-file");
+  const uploadProgress = document.getElementById("upload-progress");
+  const uploadProgressFill = document.querySelector(".upload-progress-fill");
+  const uploadProgressText = document.querySelector(".upload-progress-text");
+  
+  if (!uploadToggle || !uploadModal) {
+    console.error("Upload elements not found");
+    return;
+  }
+  
+  // Open upload modal
+  uploadToggle.addEventListener("click", (e) => {
+    e.preventDefault();
+    openUploadModal();
+  });
+  
+  // Close modal events
+  uploadModalClose.addEventListener("click", closeUploadModal);
+  uploadCancel.addEventListener("click", closeUploadModal);
+  
+  // Close modal when clicking outside
+  uploadModal.addEventListener("click", (e) => {
+    if (e.target === uploadModal) {
+      closeUploadModal();
+    }
+  });
+  
+  // Handle form submission
+  uploadForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    await handleUpload();
+  });
+  
+  // Auto-generate filename from file selection
+  soundFileInput.addEventListener("change", (e) => {
+    if (e.target.files.length > 0 && !soundNameInput.value.trim()) {
+      const fileName = e.target.files[0].name;
+      const nameWithoutExt = fileName.replace(/\.[^/.]+$/, "");
+      soundNameInput.value = nameWithoutExt;
+    }
+  });
+  
+  // Keyboard shortcuts
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && uploadModal.style.display !== "none") {
+      closeUploadModal();
+    }
+  });
+  
+  function openUploadModal() {
+    uploadModal.style.display = "flex";
+    uploadToggle.classList.add("active");
+    soundNameInput.focus();
+    // Reset form
+    uploadForm.reset();
+    uploadProgress.style.display = "none";
+    uploadForm.style.display = "flex";
+  }
+  
+  function closeUploadModal() {
+    uploadModal.style.display = "none";
+    uploadToggle.classList.remove("active");
+    uploadForm.reset();
+    uploadProgress.style.display = "none";
+    uploadForm.style.display = "flex";
+  }
+  
+  async function handleUpload() {
+    const soundName = soundNameInput.value.trim();
+    const soundFile = soundFileInput.files[0];
+    
+    if (!soundName || !soundFile) {
+      alert("Please provide both a sound name and file.");
+      return;
+    }
+    
+    // Show progress
+    uploadForm.style.display = "none";
+    uploadProgress.style.display = "block";
+    uploadProgressFill.style.width = "0%";
+    uploadProgressText.textContent = "Uploading...";
+    
+    try {
+      const formData = new FormData();
+      formData.append("soundFile", soundFile);
+      formData.append("soundName", soundName);
+      
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Upload failed");
+      }
+      
+      const result = await response.json();
+      
+      // Simulate progress completion
+      uploadProgressFill.style.width = "100%";
+      uploadProgressText.textContent = "Upload complete!";
+      
+      setTimeout(() => {
+        closeUploadModal();
+        // Reload sounds to show the new upload
+        loadSounds();
+      }, 1000);
+      
+    } catch (error) {
+      console.error("Upload error:", error);
+      uploadProgressText.textContent = `Upload failed: ${error.message}`;
+      uploadProgressFill.style.width = "0%";
+      
+      setTimeout(() => {
+        uploadForm.style.display = "flex";
+        uploadProgress.style.display = "none";
+      }, 2000);
+    }
   }
 }
 

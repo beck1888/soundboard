@@ -10,12 +10,37 @@ body {
 h1 {
   font-size: 2rem;
   margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #007aff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 #sounds {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
 }
 
 .sound-item {
@@ -32,6 +57,27 @@ h1 {
   word-break: break-all;
 }
 
+.favorite-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+  display: flex;
+  align-items: center;
+  margin-left: 0.5rem;
+}
+
+.favorite-btn img {
+  width: 16px;
+  height: 16px;
+}
+
+.favorite-btn:hover {
+  background: #f0f0f0;
+}
+
 .custom-player {
   display: flex;
   align-items: center;
@@ -39,8 +85,8 @@ h1 {
 }
 
 .play-btn {
-  background: #222;
-  color: white;
+  background: none;
+  color: #222;
   border: none;
   padding: 0.4rem 0.8rem;
   border-radius: 6px;
@@ -50,7 +96,7 @@ h1 {
 }
 
 .play-btn:hover {
-  background: #444;
+  background: #f0f0f0;
 }
 
 .progress {

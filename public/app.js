@@ -543,6 +543,7 @@ async function loadSounds() {
     // Initialize search after sounds are loaded
     initializeSearch();
     initializeUpload();
+    initializeInfoModal();
     
   } catch (err) {
     console.error("Network error:", err);
@@ -1040,6 +1041,87 @@ function initializeUpload() {
   }
 }
 
+// Info modal functionality
+function initializeInfoModal() {
+  const infoButton = document.getElementById("info-button");
+  const infoModal = document.getElementById("info-modal");
+  const infoClose = document.getElementById("info-close");
+  
+  if (!infoButton || !infoModal) {
+    console.error("Info modal elements not found");
+    return;
+  }
+
+  // Update info stats
+  function updateInfoStats() {
+    const totalSoundsCount = document.getElementById("total-sounds-count");
+    const favoritedSoundsCount = document.getElementById("favorited-sounds-count");
+    const showingSoundsCount = document.getElementById("showing-sounds-count");
+    
+    if (totalSoundsCount) {
+      totalSoundsCount.textContent = allSounds.length;
+    }
+    
+    if (favoritedSoundsCount && allFavorites) {
+      const favoritedCount = Object.values(allFavorites).filter(Boolean).length;
+      favoritedSoundsCount.textContent = favoritedCount;
+    }
+    
+    if (showingSoundsCount) {
+      const soundsContainer = document.getElementById("sounds");
+      const visibleSounds = soundsContainer ? soundsContainer.children.length : 0;
+      showingSoundsCount.textContent = visibleSounds;
+    }
+  }
+
+  // Open info modal
+  function openInfoModal() {
+    updateInfoStats();
+    infoModal.style.display = "flex";
+    
+    // Add escape key handler
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        closeInfoModal();
+      }
+    };
+    
+    document.addEventListener("keydown", handleEscape);
+    
+    // Store the handler for cleanup
+    infoModal._escapeHandler = handleEscape;
+  }
+
+  // Close info modal
+  function closeInfoModal() {
+    infoModal.style.display = "none";
+    
+    // Remove escape key handler
+    if (infoModal._escapeHandler) {
+      document.removeEventListener("keydown", infoModal._escapeHandler);
+      delete infoModal._escapeHandler;
+    }
+  }
+
+  // Info button click handler
+  infoButton.addEventListener("click", (e) => {
+    e.preventDefault();
+    openInfoModal();
+  });
+
+  // Close button click handler
+  if (infoClose) {
+    infoClose.addEventListener("click", closeInfoModal);
+  }
+
+  // Close modal when clicking outside
+  infoModal.addEventListener("click", (e) => {
+    if (e.target === infoModal) {
+      closeInfoModal();
+    }
+  });
+}
+
 // Error handling functions
 function showCriticalError(errorData) {
   const loadingScreen = document.getElementById("loading");
@@ -1124,6 +1206,7 @@ function showEmptyDirectory() {
   
   // Initialize upload functionality even when empty
   initializeUpload();
+  initializeInfoModal();
 }
 
 // Load sounds when page loads

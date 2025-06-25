@@ -35,7 +35,7 @@ body {
   margin: 0 2rem;
 }
 
-.upload-toggle, .heart-filter, .search-toggle {
+.upload-toggle, .heart-filter, .search-toggle, .info-button {
   background: white;
   border: 1px solid #ddd;
   border-radius: 4px;
@@ -53,15 +53,15 @@ body {
   min-height: 44px;
 }
 
-.upload-toggle::before, .heart-filter::before, .search-toggle::before {
+.upload-toggle::before, .heart-filter::before, .search-toggle::before, .info-button::before {
   display: none;
 }
 
-.upload-toggle:hover::before, .heart-filter:hover::before, .search-toggle:hover::before {
+.upload-toggle:hover::before, .heart-filter:hover::before, .search-toggle:hover::before, .info-button:hover::before {
   display: none;
 }
 
-.upload-toggle:hover, .search-toggle:hover {
+.upload-toggle:hover, .search-toggle:hover, .info-button:hover {
   background: #f8f9fa;
   border-color: #bbb;
 }
@@ -89,7 +89,7 @@ body {
   color: white;
 }
 
-.upload-icon, .heart-filter-icon, .search-icon {
+.upload-icon, .heart-filter-icon, .search-icon, .info-icon {
   width: 20px;
   height: 20px;
   display: block;
@@ -377,13 +377,13 @@ h1 {
     gap: 0.5rem;
   }
   
-  .upload-toggle, .heart-filter, .search-toggle {
+  .upload-toggle, .heart-filter, .search-toggle, .info-button {
     padding: 0.6rem;
     min-width: 40px;
     min-height: 40px;
   }
   
-  .upload-icon, .heart-filter-icon, .search-icon {
+  .upload-icon, .heart-filter-icon, .search-icon, .info-icon {
     width: 18px;
     height: 18px;
     user-select: none;
@@ -1248,6 +1248,34 @@ html {
   background: #bdc3c7;
   border-color: #bdc3c7;
   cursor: not-allowed;
+}
+
+/* Info Modal Styles */
+.info-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.info-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #495057;
+}
+
+.info-value {
+  font-weight: 700;
+  color: #007aff;
+  font-size: 1.1rem;
 }
 
 .main-content {

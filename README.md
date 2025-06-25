@@ -81,10 +81,10 @@ Edit `public/config.json` to set your desired paths:
 ### 3. Create Required Directories
 ```bash
 # Create the sound effects directory
-mkdir -p ~/Documents/Developer/Web/soundboard/sfx
+mkdir -p <fp_for_dir_to_save_and_read_sounds>
 
 # Create the user storage directory  
-mkdir -p ~/Documents/Developer/Web/soundboard/user_storage
+mkdir -p <fp_to_user_storage_folder>
 ```
 
 ### 4. Start the Server
@@ -141,14 +141,10 @@ If `config.json` is missing or invalid, Pulse Bin falls back to:
 Perfect for a dedicated sound server:
 
 1. **Install Node.js**:
-   ```bash
-   curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-   sudo apt-get install -y nodejs
-   ```
 
 2. **Clone and setup**:
    ```bash
-   git clone <repository-url> pulse-bin
+   git clone https://github.com/beck1888/soundboard.git pulse-bin
    cd pulse-bin
    npm install
    ```

@@ -43,19 +43,19 @@ function createSoundItem(file, isFavorite) {
       <span class="filename">${displayName}</span>
     </div>
     <div class="custom-player">
-      <button class="play-btn"><img src='/play.svg' alt='Play' style='width: 20px; height: 20px;'></button>
+      <button class="play-btn"><img src='/fluentui-system-icons/play.svg' alt='Play' style='width: 20px; height: 20px;'></button>
       <div class="progress"><div class="progress-bar"></div></div>
       <div class="time">0:00</div>
       <button class="download-btn" title="Download file">
-        <img src='/download.svg' alt='Download'>
+        <img src='/fluentui-system-icons/download.svg' alt='Download'>
       </button>
       <button class="favorite-btn" title="Toggle favorite">
-        <img src='/${isFavorite ? 'heart_on.svg' : 'heart_off.svg'}' alt='${isFavorite ? 'Favorited' : 'Not favorited'}'>
+        <img src='/${isFavorite ? 'fluentui-system-icons/heart_on.svg' : 'fluentui-system-icons/heart_off.svg'}' alt='${isFavorite ? 'Favorited' : 'Not favorited'}'>
       </button>
     </div>
     <div class="context-menu" style="display: none;">
-      <button class="rename-btn"><img src='/edit.svg' alt='Rename' style='width:16px;height:16px;margin-right:4px;'>Rename</button>
-      <button class="delete-btn"><img src='/delete.svg' alt='Delete' style='width:16px;height:16px;margin-right:4px;'>Delete</button>
+      <button class="rename-btn"><img src='/fluentui-system-icons/edit.svg' alt='Rename' style='width:16px;height:16px;margin-right:4px;'>Rename</button>
+      <button class="delete-btn"><img src='/fluentui-system-icons/delete.svg' alt='Delete' style='width:16px;height:16px;margin-right:4px;'>Delete</button>
     </div>
   `;
 
@@ -401,7 +401,7 @@ function createSoundItem(file, isFavorite) {
     const newFavoriteStatus = await toggleFavorite(file);
     if (newFavoriteStatus !== null) {
       const img = favoriteBtn.querySelector('img');
-      img.src = `/${newFavoriteStatus ? 'heart_on.svg' : 'heart_off.svg'}`;
+      img.src = `/${newFavoriteStatus ? 'fluentui-system-icons/heart_on.svg' : 'fluentui-system-icons/heart_off.svg'}`;
       img.alt = newFavoriteStatus ? 'Favorited' : 'Not favorited';
       
       // Add a subtle animation for the heart change
@@ -434,7 +434,7 @@ function createSoundItem(file, isFavorite) {
 
   audio.addEventListener("play", () => {
     isPlaying = true;
-    playBtn.innerHTML = "<img src='/pause.svg' alt='Pause' style='width: 20px; height: 20px;'>";
+    playBtn.innerHTML = "<img src='/fluentui-system-icons/pause.svg' alt='Pause' style='width: 20px; height: 20px;'>";
     // Start smooth animation
     if (animationId) cancelAnimationFrame(animationId);
     updateProgress();
@@ -442,7 +442,7 @@ function createSoundItem(file, isFavorite) {
 
   audio.addEventListener("pause", () => {
     isPlaying = false;
-    playBtn.innerHTML = "<img src='/play.svg' alt='Play' style='width: 20px; height: 20px;'>";
+    playBtn.innerHTML = "<img src='/fluentui-system-icons/play.svg' alt='Play' style='width: 20px; height: 20px;'>";
     // Stop smooth animation
     if (animationId) {
       cancelAnimationFrame(animationId);
@@ -452,7 +452,7 @@ function createSoundItem(file, isFavorite) {
 
   audio.addEventListener("ended", () => {
     isPlaying = false;
-    playBtn.innerHTML = "<img src='/play.svg' alt='Play' style='width: 20px; height: 20px;'>";
+    playBtn.innerHTML = "<img src='/fluentui-system-icons/play.svg' alt='Play' style='width: 20px; height: 20px;'>";
     progressBar.style.width = `0%`;
     // Stop smooth animation
     if (animationId) {
@@ -726,12 +726,12 @@ function initializeSearch() {
     
     if (isHeartFilterActive) {
       heartFilter.classList.add('active');
-      heartFilterIcon.src = '/heart_on.svg';
+      heartFilterIcon.src = '/fluentui-system-icons/heart_on.svg';
       heartFilterIcon.alt = 'Show favorites only';
       heartFilter.title = 'Show all sounds';
     } else {
       heartFilter.classList.remove('active');
-      heartFilterIcon.src = '/heart_off.svg';
+      heartFilterIcon.src = '/fluentui-system-icons/heart_off.svg';
       heartFilterIcon.alt = 'Show all';
       heartFilter.title = 'Filter favorites';
     }

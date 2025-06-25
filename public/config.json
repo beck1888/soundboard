@@ -1,4 +1,4 @@
 {
-    "soundEffectDirFilePath": "~/Documents/Developer/Web/soundboard/sfx",
-    "stateDataFilePath": "~/Documents/Developer/Web/soundboard/user_storage/favorites.json"
+    "soundEffectDirFilePath": "<full_file_path_to_folder>",
+    "stateDataFilePath": "<full_file_path_to_favorites.json>"
 }

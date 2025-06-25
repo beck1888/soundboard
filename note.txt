@@ -1,2 +1,0 @@
-ffmpeg be doing it's own thing and giving errors all the time
-

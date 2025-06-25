@@ -787,20 +787,28 @@ function initializeUpload() {
   function updateValidationState() {
     const soundNameError = document.getElementById("sound-name-error");
     const uploadSubmitBtn = document.getElementById("upload-submit");
-    const currentValue = soundNameInput.value;
+    const currentValue = soundNameInput.value.trim();
+    const hasFile = soundFileInput.files.length > 0;
     
+    let isValid = true;
+    
+    // Check for invalid characters
     if (currentValue && !validateSoundName(currentValue)) {
-      // Invalid characters found
       soundNameInput.classList.add('error');
       soundNameError.textContent = 'Your title can only contain letters, numbers, spaces, hyphens, and underscores';
       soundNameError.style.display = 'block';
-      uploadSubmitBtn.disabled = true;
+      isValid = false;
     } else {
-      // Valid or empty
       soundNameInput.classList.remove('error');
       soundNameError.style.display = 'none';
-      uploadSubmitBtn.disabled = false;
     }
+    
+    // Check if both file and name are provided
+    if (!hasFile || !currentValue || currentValue.length === 0) {
+      isValid = false;
+    }
+    
+    uploadSubmitBtn.disabled = !isValid;
   }
 
   // Add real-time validation to sound name input
@@ -848,6 +856,9 @@ function initializeUpload() {
         soundNameInput.value = nameWithoutExt;
       }
       
+      // Update validation state after file drop
+      updateValidationState();
+      
       // Focus the sound name input after file drop
       setTimeout(() => {
         soundNameInput.focus();
@@ -890,6 +901,9 @@ function initializeUpload() {
         soundNameInput.value = nameWithoutExt;
       }
       
+      // Update validation state after file selection
+      updateValidationState();
+      
       // Focus the sound name input after file selection
       setTimeout(() => {
         soundNameInput.focus();
@@ -897,6 +911,8 @@ function initializeUpload() {
       }, 100);
     } else {
       updateFileUploadText(null);
+      // Update validation state when file is removed
+      updateValidationState();
     }
   });
   

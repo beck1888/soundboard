@@ -61,6 +61,8 @@
       <form id="upload-form" class="upload-form">
         <div class="upload-field">
           <label for="sound-file">Choose Audio File:</label>
+          <small>Supports any audio format</small>
+
           <div class="file-upload-area">
             <input type="file" id="sound-file" accept=".mp3,.wav,.flac,.m4a,.aac,.ogg,.wma,.webm,audio/*" required>
             <div class="file-upload-text">
@@ -68,13 +70,12 @@
               <span class="file-upload-sub">or drop a file here</span>
             </div>
           </div>
-          <small>Supports any audio format</small>
         </div>
         <div class="upload-field">
           <label for="sound-name">Sound Name:</label>
+          <small>This will be the display name for your sound</small>
           <input type="text" id="sound-name" placeholder="Enter sound name" required>
           <div id="sound-name-error" class="input-error" style="display: none;"></div>
-          <small>This will be the display name for your sound</small>
         </div>
         <div class="upload-buttons">
           <button type="button" id="upload-cancel" class="upload-cancel-btn">Cancel</button>

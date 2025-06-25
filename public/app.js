@@ -18,6 +18,12 @@ async function toggleFavorite(filename) {
     }
     
     const result = await response.json();
+    
+    // Update global favorites for search functionality
+    if (allFavorites) {
+      allFavorites[filename] = result.favorite;
+    }
+    
     return result.favorite;
   } catch (err) {
     console.error('Error toggling favorite:', err);
@@ -156,11 +162,190 @@ async function loadSounds() {
       soundsContainer.appendChild(soundItem);
     });
     
+    // Store globally for search functionality
+    allSounds = sounds;
+    allFavorites = favorites;
+    
+    // Initialize search functionality
+    initializeSearch();
+    
   } catch (err) {
     console.error("Failed to fetch sounds:", err);
     loadingScreen.style.display = "none";
     soundsContainer.style.display = "block";
     soundsContainer.innerHTML = "<p>Failed to load sounds 🫠</p>";
+  }
+}
+
+// Global variables for search and sounds
+let allSounds = [];
+let allFavorites = {};
+let isSearchActive = false;
+
+// Fuzzy search function
+function fuzzyMatch(text, pattern) {
+  const textLower = text.toLowerCase();
+  const patternLower = pattern.toLowerCase();
+  
+  // Exact match gets highest score
+  if (textLower.includes(patternLower)) {
+    return { isMatch: true, score: 100 };
+  }
+  
+  // Fuzzy match algorithm
+  let patternIndex = 0;
+  let score = 0;
+  let consecutiveMatches = 0;
+  
+  for (let i = 0; i < textLower.length && patternIndex < patternLower.length; i++) {
+    if (textLower[i] === patternLower[patternIndex]) {
+      patternIndex++;
+      consecutiveMatches++;
+      score += consecutiveMatches * 2; // Bonus for consecutive matches
+    } else {
+      consecutiveMatches = 0;
+    }
+  }
+  
+  if (patternIndex === patternLower.length) {
+    // All characters matched, calculate final score
+    const completionRatio = patternIndex / textLower.length;
+    return { isMatch: true, score: score * completionRatio };
+  }
+  
+  return { isMatch: false, score: 0 };
+}
+
+// Search and rank sounds
+function searchSounds(query) {
+  if (!query.trim()) {
+    return allSounds.map(sound => ({ sound, isFavorite: allFavorites[sound] || false }));
+  }
+  
+  const results = [];
+  
+  allSounds.forEach(sound => {
+    const isFavorite = allFavorites[sound] || false;
+    const match = fuzzyMatch(sound, query);
+    
+    if (match.isMatch) {
+      let rank;
+      const isExactMatch = sound.toLowerCase().includes(query.toLowerCase());
+      
+      // Ranking based on your requirements
+      if (isFavorite && isExactMatch) {
+        rank = 1; // Favorited sounds with exact text contains match
+      } else if (isFavorite && !isExactMatch) {
+        rank = 2; // Favorite sounds with fuzzy text match
+      } else if (!isFavorite && isExactMatch) {
+        rank = 3; // Non-favorited sounds with exact text contains match
+      } else {
+        rank = 4; // Non-favorited sounds with fuzzy text match
+      }
+      
+      results.push({
+        sound,
+        isFavorite,
+        rank,
+        score: match.score
+      });
+    }
+  });
+  
+  // Sort by rank first, then by score within each rank
+  results.sort((a, b) => {
+    if (a.rank !== b.rank) {
+      return a.rank - b.rank;
+    }
+    return b.score - a.score;
+  });
+  
+  return results;
+}
+
+// Display search results
+function displaySearchResults(results) {
+  const soundsContainer = document.getElementById("sounds");
+  const noResultsContainer = document.getElementById("no-results");
+  
+  if (results.length === 0) {
+    soundsContainer.style.display = "none";
+    noResultsContainer.style.display = "flex";
+    return;
+  }
+  
+  noResultsContainer.style.display = "none";
+  soundsContainer.style.display = "block";
+  soundsContainer.innerHTML = "";
+  
+  results.forEach(({ sound, isFavorite }) => {
+    const soundItem = createSoundItem(sound, isFavorite);
+    soundsContainer.appendChild(soundItem);
+  });
+}
+
+// Search functionality
+function initializeSearch() {
+  const searchToggle = document.getElementById("search-toggle");
+  const searchBar = document.getElementById("search-bar");
+  const searchInput = document.getElementById("search-input");
+  const searchClose = document.getElementById("search-close");
+  
+  // Check if elements exist
+  if (!searchToggle || !searchBar || !searchInput || !searchClose) {
+    console.error("Search elements not found");
+    return;
+  }
+  
+  // Ensure search toggle is visible initially
+  searchToggle.style.display = "block";
+  searchBar.style.display = "none";
+  
+  // Toggle search bar
+  searchToggle.addEventListener("click", (e) => {
+    e.preventDefault();
+    if (isSearchActive) {
+      closeSearch();
+    } else {
+      openSearch();
+    }
+  });
+  
+  // Close search
+  searchClose.addEventListener("click", closeSearch);
+  
+  // Search input handler
+  searchInput.addEventListener("input", (e) => {
+    const query = e.target.value;
+    const results = searchSounds(query);
+    displaySearchResults(results);
+  });
+  
+  // Close search on Escape key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && isSearchActive) {
+      closeSearch();
+    }
+  });
+  
+  function openSearch() {
+    isSearchActive = true;
+    searchBar.style.display = "flex";
+    searchToggle.style.display = "none";
+    searchInput.focus();
+  }
+  
+  function closeSearch() {
+    isSearchActive = false;
+    searchBar.style.display = "none";
+    searchToggle.style.display = "block";
+    searchInput.value = "";
+    
+    // Show all sounds when closing search
+    displaySearchResults(allSounds.map(sound => ({ 
+      sound, 
+      isFavorite: allFavorites[sound] || false 
+    })));
   }
 }
 

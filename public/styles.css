@@ -2,9 +2,99 @@ body {
   font-family: system-ui, sans-serif;
   background-color: #f9f9f9;
   color: #222;
-  padding: 2rem;
+  padding: 4rem 2rem 2rem 2rem; /* Added top padding for search */
   max-width: 800px;
   margin: auto;
+  position: relative;
+}
+
+.search-container {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 100;
+}
+
+.search-toggle {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: block;
+}
+
+.search-toggle:hover {
+  background: #f0f0f0;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.search-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.search-bar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  width: 300px;
+  max-width: calc(100vw - 4rem);
+}
+
+.search-bar input {
+  flex: 1;
+  border: none;
+  padding: 0.75rem;
+  font-size: 1rem;
+  border-radius: 8px 0 0 8px;
+  outline: none;
+}
+
+.search-close {
+  background: none;
+  border: none;
+  padding: 0.75rem;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #666;
+  border-radius: 0 8px 8px 0;
+  transition: background 0.2s ease;
+}
+
+.search-close:hover {
+  background: #f0f0f0;
+}
+
+.no-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+}
+
+.no-results-image {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+.no-results p {
+  font-size: 1.1rem;
+  color: #666;
+  margin: 0;
 }
 
 h1 {
@@ -119,4 +209,33 @@ h1 {
   font-size: 0.85rem;
   min-width: 60px;
   text-align: right;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  body {
+    padding: 3rem 1rem 1rem 1rem; /* Adjusted top padding for mobile */
+  }
+  
+  .search-container {
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+  
+  .search-bar {
+    width: 250px;
+    max-width: calc(100vw - 2rem);
+  }
+  
+  .search-bar input {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  .sound-item {
+    padding: 0.75rem;
+  }
+  
+  .custom-player {
+    gap: 0.5rem;
+  }
 }

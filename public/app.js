@@ -39,6 +39,19 @@ fetch("/api/sounds")
       const timeText = div.querySelector(".time");
 
       let isPlaying = false;
+      let animationId = null;
+
+      // Smooth progress bar animation function
+      function updateProgress() {
+        if (isPlaying && !audio.paused) {
+          if (audio.duration && !isNaN(audio.duration)) {
+            const percent = (audio.currentTime / audio.duration) * 100;
+            progressBar.style.width = `${percent}%`;
+            timeText.textContent = `${formatTime(audio.currentTime)}`;
+          }
+          animationId = requestAnimationFrame(updateProgress);
+        }
+      }
 
       playBtn.addEventListener("click", () => {
         if (isPlaying) {
@@ -51,23 +64,30 @@ fetch("/api/sounds")
       audio.addEventListener("play", () => {
         isPlaying = true;
         playBtn.innerHTML = "<img src='/pause.svg' alt='Pause' style='width: 20px; height: 20px;'>";
+        // Start smooth animation
+        if (animationId) cancelAnimationFrame(animationId);
+        updateProgress();
       });
 
       audio.addEventListener("pause", () => {
         isPlaying = false;
         playBtn.innerHTML = "<img src='/play.svg' alt='Play' style='width: 20px; height: 20px;'>";
-      });
-
-      audio.addEventListener("timeupdate", () => {
-        const percent = (audio.currentTime / audio.duration) * 100;
-        progressBar.style.width = `${percent}%`;
-        timeText.textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration || 0)}`;
+        // Stop smooth animation
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
       });
 
       audio.addEventListener("ended", () => {
         isPlaying = false;
         playBtn.innerHTML = "<img src='/play.svg' alt='Play' style='width: 20px; height: 20px;'>";
         progressBar.style.width = `0%`;
+        // Stop smooth animation
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+          animationId = null;
+        }
       });
 
       progress.addEventListener("click", (e) => {

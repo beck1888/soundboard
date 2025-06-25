@@ -237,12 +237,12 @@ Great for local use or development:
 4. Test thoroughly
 5. Submit a pull request
 
-## � Acknowledgments
+## Acknowledgments
 
 - **Icons**: This project uses [Microsoft Fluent UI System Icons](https://github.com/microsoft/fluentui-system-icons) licensed under MIT
 - **FFmpeg**: Audio processing powered by FFmpeg
 
-## �📄 License
+## 📄 License
 
 MIT License
 

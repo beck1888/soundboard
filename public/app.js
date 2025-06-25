@@ -776,6 +776,40 @@ function initializeUpload() {
     }
   }
 
+  // Validation function for sound name
+  function validateSoundName(name) {
+    // Allow letters, numbers, spaces, hyphens, and underscores only
+    const validPattern = /^[a-zA-Z0-9\s\-_]*$/;
+    return validPattern.test(name);
+  }
+
+  // Function to update validation state
+  function updateValidationState() {
+    const soundNameError = document.getElementById("sound-name-error");
+    const uploadSubmitBtn = document.getElementById("upload-submit");
+    const currentValue = soundNameInput.value;
+    
+    if (currentValue && !validateSoundName(currentValue)) {
+      // Invalid characters found
+      soundNameInput.classList.add('error');
+      soundNameError.textContent = 'Your title can only contain letters, numbers, spaces, hyphens, and underscores';
+      soundNameError.style.display = 'block';
+      uploadSubmitBtn.disabled = true;
+    } else {
+      // Valid or empty
+      soundNameInput.classList.remove('error');
+      soundNameError.style.display = 'none';
+      uploadSubmitBtn.disabled = false;
+    }
+  }
+
+  // Add real-time validation to sound name input
+  soundNameInput.addEventListener('input', updateValidationState);
+  soundNameInput.addEventListener('paste', () => {
+    // Use setTimeout to allow paste to complete before validation
+    setTimeout(updateValidationState, 0);
+  });
+
   // Drag and drop functionality
   let dragCounter = 0;
 
@@ -895,6 +929,9 @@ function initializeUpload() {
     uploadProgress.style.display = "none";
     uploadForm.style.display = "flex";
     
+    // Reset validation state
+    updateValidationState();
+    
     // Setup escape handler
     setupModalEscapeHandler();
     
@@ -910,6 +947,9 @@ function initializeUpload() {
     uploadForm.reset();
     uploadProgress.style.display = "none";
     uploadForm.style.display = "flex";
+    
+    // Reset validation state
+    updateValidationState();
     
     // Remove escape handler
     removeModalEscapeHandler();

@@ -864,6 +864,31 @@ html {
   background: white;
 }
 
+/* Error states for upload form */
+.upload-field input[type="text"].error {
+  border-color: #ff3b30;
+  background: rgba(255, 59, 48, 0.05);
+}
+
+.upload-field input[type="text"].error:focus {
+  border-color: #ff3b30;
+  box-shadow: 0 0 0 4px rgba(255, 59, 48, 0.1);
+}
+
+.input-error {
+  color: #ff3b30;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.input-error::before {
+  content: "⚠";
+  font-weight: bold;
+}
+
 .file-upload-area {
   position: relative;
   display: flex;

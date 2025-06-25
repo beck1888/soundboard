@@ -63,7 +63,7 @@ function createSoundItem(file, isFavorite) {
   `;
 
   const audio = new Audio(`/sfx/${encodeURIComponent(file)}`);
-  audio.preload = "none";
+  audio.preload = "metadata"; // Load metadata to get duration
 
   const playBtn = div.querySelector(".play-btn");
   const progress = div.querySelector(".progress");
@@ -78,6 +78,21 @@ function createSoundItem(file, isFavorite) {
 
   let isPlaying = false;
   let animationId = null;
+  let duration = 0;
+
+  // Load duration when metadata is available
+  audio.addEventListener("loadedmetadata", () => {
+    duration = audio.duration;
+    if (!isPlaying) {
+      timeText.textContent = formatTime(duration);
+    }
+  });
+
+  // Handle cases where duration might be available immediately
+  if (audio.duration && !isNaN(audio.duration)) {
+    duration = audio.duration;
+    timeText.textContent = formatTime(duration);
+  }
 
   // Shared function to open context menu
   const openContextMenu = () => {
@@ -463,6 +478,9 @@ function createSoundItem(file, isFavorite) {
       cancelAnimationFrame(animationId);
       animationId = null;
     }
+    
+    // Show duration instead of current time when paused
+    timeText.textContent = formatTime(duration);
   });
 
   audio.addEventListener("ended", () => {
@@ -474,6 +492,9 @@ function createSoundItem(file, isFavorite) {
       cancelAnimationFrame(animationId);
       animationId = null;
     }
+    
+    // Show duration instead of current time when ended
+    timeText.textContent = formatTime(duration);
   });
 
   progress.addEventListener("click", (e) => {

@@ -113,15 +113,27 @@ function createSoundItem(file, isFavorite) {
     const modalConfirm = document.getElementById("rename-confirm");
     const modalCancel = document.getElementById("rename-cancel");
 
+    // Reset modal state
+    modalInput.value = displayName;
+    
+    // Remove any existing event listeners by cloning the buttons
+    const newModalCancel = modalCancel.cloneNode(true);
+    const newModalConfirm = modalConfirm.cloneNode(true);
+    modalCancel.parentNode.replaceChild(newModalCancel, modalCancel);
+    modalConfirm.parentNode.replaceChild(newModalConfirm, modalConfirm);
+
     // Center modal by using flex display (matches CSS)
     modal.style.display = "flex";
-    modalInput.value = displayName;
+    modalInput.focus();
 
-    modalCancel.addEventListener("click", () => {
+    // Function to close modal
+    const closeModal = () => {
       modal.style.display = "none";
-    });
+    };
 
-    modalConfirm.addEventListener("click", async () => {
+    newModalCancel.addEventListener("click", closeModal);
+
+    newModalConfirm.addEventListener("click", async () => {
       const newName = modalInput.value.trim();
       if (newName) {
         try {
@@ -132,18 +144,8 @@ function createSoundItem(file, isFavorite) {
           });
           
           if (response.ok) {
-            const result = await response.json();
-            // Update the display name (remove .mp3 extension for display)
-            const newDisplayName = result.newFilename.replace(/\.mp3$/i, '');
-            div.querySelector(".filename").textContent = newDisplayName;
-            
-            // Update the audio source and download link
-            const audio = div.querySelector('audio') || new Audio();
-            audio.src = `/sfx/${encodeURIComponent(result.newFilename)}`;
-            
-            modal.style.display = "none";
-            
-            console.log(`✅ File renamed successfully to: ${result.newFilename}`);
+            // Reload the page to refresh the sound list with new name
+            location.reload();
           } else {
             const error = await response.json();
             console.error("Failed to rename file:", error.error);
@@ -153,6 +155,23 @@ function createSoundItem(file, isFavorite) {
           console.error("Error renaming file:", err);
           alert("Error renaming file. Please try again.");
         }
+        closeModal();
+      }
+    });
+
+    // Close modal on Enter key
+    modalInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        newModalConfirm.click();
+      } else if (event.key === "Escape") {
+        closeModal();
+      }
+    });
+
+    // Close modal when clicking outside
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) {
+        closeModal();
       }
     });
   });
@@ -163,11 +182,17 @@ function createSoundItem(file, isFavorite) {
     // Hide context menu and remove blur
     contextMenu.style.display = "none";
     div.classList.remove("blurred");
+    
     const modal = document.getElementById("delete-modal");
     const modalCheckbox = document.getElementById("delete-checkbox");
     const modalConfirm = document.getElementById("delete-confirm");
     const modalCancel = document.getElementById("delete-cancel");
-    // Show the name of the sound to be deleted in bold
+    
+    // Reset modal state
+    modalCheckbox.checked = false;
+    modalConfirm.disabled = true;
+    
+    // Show the name of the sound to be deleted
     let modalSoundName = document.getElementById("delete-sound-name");
     if (!modalSoundName) {
       modalSoundName = document.createElement("div");
@@ -175,29 +200,70 @@ function createSoundItem(file, isFavorite) {
       modalSoundName.style.marginBottom = "8px";
       modalSoundName.style.fontWeight = "bold";
       modalSoundName.style.textAlign = "center";
-      // Insert only if modalCheckbox exists and has a parent
-      if (modalCheckbox && modalCheckbox.parentElement) {
-        modalCheckbox.parentElement.insertBefore(modalSoundName, modalCheckbox);
+      modalSoundName.style.color = "#d32f2f";
+      
+      // Insert before the checkbox in the modal body
+      const modalBody = modal.querySelector(".modal-body");
+      const checkboxLabel = modalBody.querySelector(".checkbox-label");
+      if (checkboxLabel) {
+        modalBody.insertBefore(modalSoundName, checkboxLabel);
       } else {
-        modal.appendChild(modalSoundName);
+        modalBody.appendChild(modalSoundName);
       }
     }
-    modalSoundName.innerHTML = `Deleting: <b>${displayName}</b>`;
+    modalSoundName.textContent = `Deleting: ${displayName}`;
+    
+    // Remove any existing event listeners by cloning the elements
+    const newModalCheckbox = modalCheckbox.cloneNode(true);
+    const newModalCancel = modalCancel.cloneNode(true);
+    const newModalConfirm = modalConfirm.cloneNode(true);
+    
+    modalCheckbox.parentNode.replaceChild(newModalCheckbox, modalCheckbox);
+    modalCancel.parentNode.replaceChild(newModalCancel, modalCancel);
+    modalConfirm.parentNode.replaceChild(newModalConfirm, modalConfirm);
+    
+    // Reset the new checkbox state
+    newModalCheckbox.checked = false;
+    newModalConfirm.disabled = true;
+    
     modal.style.display = "flex";
-    modalConfirm.disabled = true;
-    modalCheckbox.addEventListener("change", () => {
-      modalConfirm.disabled = !modalCheckbox.checked;
-    });
-    modalCancel.addEventListener("click", () => {
+    
+    // Function to close modal and reset state
+    const closeModal = () => {
       modal.style.display = "none";
+      newModalCheckbox.checked = false;
+      newModalConfirm.disabled = true;
+    };
+    
+    newModalCheckbox.addEventListener("change", () => {
+      newModalConfirm.disabled = !newModalCheckbox.checked;
     });
-    modalConfirm.addEventListener("click", async () => {
+    
+    newModalCancel.addEventListener("click", closeModal);
+    
+    newModalConfirm.addEventListener("click", async () => {
+      if (!newModalCheckbox.checked) return;
+      
       try {
-        const response = await fetch(`/api/delete/${encodeURIComponent(file)}`, { method: "DELETE" });
+        const response = await fetch(`/api/delete/${encodeURIComponent(file)}`, { 
+          method: "DELETE" 
+        });
+        
         if (response.ok) {
           div.remove();
-          modal.style.display = "none";
+          closeModal();
           console.log(`🗑️ File deleted successfully: ${file}`);
+          
+          // If this was the last sound and we're in search/filter mode, check if we need to show "no results"
+          const remainingSounds = document.querySelectorAll('.sound-item');
+          if (remainingSounds.length === 0) {
+            const noResultsContainer = document.getElementById("no-results");
+            const soundsContainer = document.getElementById("sounds");
+            if (noResultsContainer && soundsContainer) {
+              soundsContainer.style.display = "none";
+              noResultsContainer.style.display = "flex";
+            }
+          }
         } else {
           const error = await response.json();
           console.error("Failed to delete file:", error.error);
@@ -206,6 +272,21 @@ function createSoundItem(file, isFavorite) {
       } catch (err) {
         console.error("Error deleting file:", err);
         alert("Error deleting file. Please try again.");
+      }
+    });
+
+    // Close modal when clicking outside
+    modal.addEventListener("click", (event) => {
+      if (event.target === modal) {
+        closeModal();
+      }
+    });
+    
+    // Close modal on Escape key
+    document.addEventListener("keydown", function escapeHandler(event) {
+      if (event.key === "Escape") {
+        closeModal();
+        document.removeEventListener("keydown", escapeHandler);
       }
     });
   });

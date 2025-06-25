@@ -788,9 +788,8 @@ function initializeUpload() {
 
   // Create preview player UI
   function createPreviewPlayer() {
-    if (previewContainer) {
-      previewContainer.remove();
-    }
+    // Remove any existing preview player first
+    removePreviewPlayer();
     
     previewContainer = document.createElement('div');
     previewContainer.className = 'preview-player';
@@ -961,6 +960,7 @@ function initializeUpload() {
 
   // Remove preview player
   function removePreviewPlayer() {
+    // Clean up the current preview container if it exists
     if (previewContainer) {
       if (previewContainer._cleanup) {
         previewContainer._cleanup();
@@ -968,6 +968,15 @@ function initializeUpload() {
       previewContainer.remove();
       previewContainer = null;
     }
+    
+    // Also remove any orphaned preview players that might exist
+    const existingPreviews = document.querySelectorAll('.preview-player');
+    existingPreviews.forEach(preview => {
+      if (preview._cleanup) {
+        preview._cleanup();
+      }
+      preview.remove();
+    });
   }
 
   // Update file upload text when file is selected

@@ -95,32 +95,6 @@ npm start
 ### 5. Access Pulse Bin
 Open your browser and navigate to: `http://localhost:3000`
 
-## ⚙️ Configuration Guide
-
-### Setting Up Custom Paths
-
-1. **Edit the config file**: `public/config.json`
-   ```json
-   {
-       "soundEffectDirFilePath": "/path/to/your/sounds",
-       "stateDataFilePath": "/path/to/your/favorites.json"
-   }
-   ```
-
-2. **Supported path formats**:
-   - Absolute paths: `/home/user/sounds`
-   - Home directory: `~/sounds` (expands to `/home/user/sounds`)
-   - Relative paths: `./sounds` (relative to project root)
-
-3. **Create the directories**:
-   ```bash
-   # Sound effects directory (must exist for uploads)
-   mkdir -p /path/to/your/sounds
-   
-   # User storage directory (for favorites.json)
-   mkdir -p /path/to/your/user_storage
-   ```
-
 ### Required Files and Directories
 
 | Path | Type | Purpose | Auto-created? |

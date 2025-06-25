@@ -811,6 +811,34 @@ function initializeUpload() {
     return allSounds.some(sound => sound.toLowerCase() === nameWithExtension.toLowerCase());
   }
 
+  // Function to check if string is in title case
+  function isTitleCase(str) {
+    // Split by spaces, hyphens, and underscores to handle multi-word titles
+    const words = str.split(/[\s\-_]+/).filter(word => word.length > 0);
+    
+    return words.every(word => {
+      // Skip empty words
+      if (word.length === 0) return true;
+      
+      // Check if first character is uppercase and rest are lowercase
+      // Allow numbers and special characters to pass through
+      const firstChar = word.charAt(0);
+      const restOfWord = word.slice(1);
+      
+      // If first character is a letter, it should be uppercase
+      if (/[a-zA-Z]/.test(firstChar)) {
+        if (firstChar !== firstChar.toUpperCase()) return false;
+      }
+      
+      // If rest of word contains letters, they should be lowercase
+      if (/[a-zA-Z]/.test(restOfWord)) {
+        return restOfWord === restOfWord.toLowerCase();
+      }
+      
+      return true;
+    });
+  }
+
   // Function to update validation state
   function updateValidationState() {
     const soundNameError = document.getElementById("sound-name-error");
@@ -819,8 +847,9 @@ function initializeUpload() {
     const hasFile = soundFileInput.files.length > 0;
     
     let isValid = true;
+    let showWarning = false;
     
-    // Check for invalid characters
+    // Check for invalid characters (blocking error)
     if (currentValue && !validateSoundName(currentValue)) {
       soundNameInput.classList.add('error');
       soundNameError.textContent = 'Your title can only contain letters, numbers, spaces, hyphens, and underscores';
@@ -828,13 +857,22 @@ function initializeUpload() {
       soundNameError.className = 'input-error'; // Red error
       isValid = false;
     } 
-    // Check if file name already exists
+    // Check if file name already exists (blocking error)
     else if (currentValue && fileNameExists(currentValue)) {
       soundNameInput.classList.add('error');
       soundNameError.textContent = 'A sound with this name already exists. Please choose a different name.';
       soundNameError.style.display = 'block';
       soundNameError.className = 'input-warning'; // Orange warning
       isValid = false;
+    } 
+    // Check if not in title case (non-blocking warning)
+    else if (currentValue && !isTitleCase(currentValue)) {
+      soundNameInput.classList.remove('error'); // Remove error styling
+      soundNameError.textContent = 'Consider using Title Case for better consistency (e.g., "My Sound Name")';
+      soundNameError.style.display = 'block';
+      soundNameError.className = 'input-suggestion'; // Yellow suggestion
+      showWarning = true;
+      // Don't set isValid to false - this is just a suggestion
     } 
     else {
       soundNameInput.classList.remove('error');

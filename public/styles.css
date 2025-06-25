@@ -909,6 +909,20 @@ html {
   font-weight: bold;
 }
 
+.input-suggestion {
+  color: #ffcc00;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.input-suggestion::before {
+  content: "💡";
+  font-weight: bold;
+}
+
 .file-upload-area {
   position: relative;
   display: flex;

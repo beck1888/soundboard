@@ -522,12 +522,13 @@ async function loadSounds() {
     // Clear container and populate with sounds
     soundsContainer.innerHTML = "";
     
-    // Group favorites and non-favorites
-    const favorites = allSounds.filter(sound => allFavorites[sound]);
-    const nonFavorites = allSounds.filter(sound => !allFavorites[sound]);
+    // Sort all sounds alphabetically (case-insensitive)
+    const sortedSounds = [...allSounds].sort((a, b) => 
+      a.toLowerCase().localeCompare(b.toLowerCase())
+    );
     
-    // Display favorites first, then non-favorites
-    [...favorites, ...nonFavorites].forEach(sound => {
+    // Display all sounds in alphabetical order
+    sortedSounds.forEach(sound => {
       const isFavorite = allFavorites[sound] || false;
       const soundItem = createSoundItem(sound, isFavorite);
       soundsContainer.appendChild(soundItem);
@@ -655,6 +656,11 @@ function displaySearchResults(results) {
   noResultsContainer.style.display = "none";
   soundsContainer.style.display = "block";
   soundsContainer.innerHTML = "";
+  
+  // Sort results alphabetically by sound name (case-insensitive)
+  results.sort((a, b) => {
+    return a.sound.toLowerCase().localeCompare(b.sound.toLowerCase());
+  });
   
   results.forEach(({ sound, isFavorite }) => {
     const soundItem = createSoundItem(sound, isFavorite);

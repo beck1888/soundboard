@@ -181,6 +181,7 @@ async function loadSounds() {
 let allSounds = [];
 let allFavorites = {};
 let isSearchActive = false;
+let isHeartFilterActive = false;
 
 // Fuzzy search function
 function fuzzyMatch(text, pattern) {
@@ -218,13 +219,20 @@ function fuzzyMatch(text, pattern) {
 
 // Search and rank sounds
 function searchSounds(query) {
+  let soundsToSearch = allSounds;
+  
+  // If heart filter is active, only search favorited sounds
+  if (isHeartFilterActive) {
+    soundsToSearch = allSounds.filter(sound => allFavorites[sound]);
+  }
+  
   if (!query.trim()) {
-    return allSounds.map(sound => ({ sound, isFavorite: allFavorites[sound] || false }));
+    return soundsToSearch.map(sound => ({ sound, isFavorite: allFavorites[sound] || false }));
   }
   
   const results = [];
   
-  allSounds.forEach(sound => {
+  soundsToSearch.forEach(sound => {
     const isFavorite = allFavorites[sound] || false;
     const match = fuzzyMatch(sound, query);
     
@@ -290,9 +298,10 @@ function initializeSearch() {
   const searchBar = document.getElementById("search-bar");
   const searchInput = document.getElementById("search-input");
   const searchClose = document.getElementById("search-close");
+  const heartFilter = document.getElementById("heart-filter");
   
   // Check if elements exist
-  if (!searchToggle || !searchBar || !searchInput || !searchClose) {
+  if (!searchToggle || !searchBar || !searchInput || !searchClose || !heartFilter) {
     console.error("Search elements not found");
     return;
   }
@@ -300,6 +309,12 @@ function initializeSearch() {
   // Ensure search toggle is visible initially
   searchToggle.style.display = "block";
   searchBar.style.display = "none";
+  
+  // Heart filter functionality
+  heartFilter.addEventListener("click", (e) => {
+    e.preventDefault();
+    toggleHeartFilter();
+  });
   
   // Toggle search bar
   searchToggle.addEventListener("click", (e) => {
@@ -316,21 +331,27 @@ function initializeSearch() {
   
   // Search input handler
   searchInput.addEventListener("input", (e) => {
-    const query = e.target.value;
-    const results = searchSounds(query);
-    displaySearchResults(results);
+    refreshResults();
   });
   
-  // Close search on Escape key
+  // Keyboard shortcuts
   document.addEventListener("keydown", (e) => {
+    // Close search on Escape key
     if (e.key === "Escape" && isSearchActive) {
       closeSearch();
+    }
+    
+    // Open search on Cmd+F (Mac) or Ctrl+F (Windows/Linux)
+    if ((e.metaKey || e.ctrlKey) && e.key === "f" && !isSearchActive) {
+      e.preventDefault(); // Prevent browser's default find dialog
+      openSearch();
     }
   });
   
   function openSearch() {
     isSearchActive = true;
     searchBar.style.display = "flex";
+    searchBar.classList.add("active");
     searchToggle.style.display = "none";
     searchInput.focus();
   }
@@ -338,14 +359,38 @@ function initializeSearch() {
   function closeSearch() {
     isSearchActive = false;
     searchBar.style.display = "none";
+    searchBar.classList.remove("active");
     searchToggle.style.display = "block";
     searchInput.value = "";
     
-    // Show all sounds when closing search
-    displaySearchResults(allSounds.map(sound => ({ 
-      sound, 
-      isFavorite: allFavorites[sound] || false 
-    })));
+    // Refresh results based on current heart filter state
+    refreshResults();
+  }
+  
+  function toggleHeartFilter() {
+    isHeartFilterActive = !isHeartFilterActive;
+    const heartFilterIcon = heartFilter.querySelector('.heart-filter-icon');
+    
+    if (isHeartFilterActive) {
+      heartFilter.classList.add('active');
+      heartFilterIcon.src = '/heart_on.svg';
+      heartFilterIcon.alt = 'Show favorites only';
+      heartFilter.title = 'Show all sounds';
+    } else {
+      heartFilter.classList.remove('active');
+      heartFilterIcon.src = '/heart_off.svg';
+      heartFilterIcon.alt = 'Show all';
+      heartFilter.title = 'Filter favorites';
+    }
+    
+    // Refresh results based on current search and filter state
+    refreshResults();
+  }
+  
+  function refreshResults() {
+    const query = searchInput.value;
+    const results = searchSounds(query);
+    displaySearchResults(results);
   }
 }
 

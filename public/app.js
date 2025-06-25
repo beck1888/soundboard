@@ -173,8 +173,6 @@ async function loadSounds() {
     
     const data = await response.json();
     
-    // Add delay to simulate loading time
-    await new Promise(resolve => setTimeout(resolve, 500));
     const { sounds, favorites } = data;
     
     // Hide loading screen and show sounds container

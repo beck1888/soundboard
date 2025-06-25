@@ -37,15 +37,32 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage: storage,
   fileFilter: function (req, file, cb) {
-    // Only allow MP3 files
-    if (file.mimetype === 'audio/mpeg' || file.originalname.toLowerCase().endsWith('.mp3')) {
+    // Allow common audio formats that can be converted to MP3
+    const allowedMimes = [
+      'audio/mpeg',           // MP3
+      'audio/wav',            // WAV
+      'audio/wave',           // WAV (alternative)
+      'audio/x-wav',          // WAV (alternative)
+      'audio/flac',           // FLAC
+      'audio/x-flac',         // FLAC (alternative)
+      'audio/mp4',            // M4A
+      'audio/aac',            // AAC
+      'audio/ogg',            // OGG
+      'audio/webm',           // WebM audio
+      'audio/x-ms-wma'        // WMA
+    ];
+    
+    const allowedExtensions = ['.mp3', '.wav', '.flac', '.m4a', '.aac', '.ogg', '.wma', '.webm'];
+    const fileExtension = path.extname(file.originalname).toLowerCase();
+    
+    if (allowedMimes.includes(file.mimetype) || allowedExtensions.includes(fileExtension)) {
       cb(null, true);
     } else {
-      cb(new Error('Only MP3 files are allowed'));
+      cb(new Error('Only audio files (MP3, WAV, FLAC, M4A, AAC, OGG, WMA, WebM) are allowed'));
     }
   },
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
+    fileSize: 50 * 1024 * 1024 // Increased to 50MB for larger audio files
   }
 });
 
@@ -125,6 +142,36 @@ function stripMetadataExceptTitle(inputPath, outputPath, title) {
   });
 }
 
+// Function to convert audio file to MP3 with metadata stripping
+function convertToMp3WithCleanMetadata(inputPath, outputPath, title) {
+  return new Promise((resolve, reject) => {
+    ffmpeg(inputPath)
+      .toFormat('mp3')
+      .audioBitrate(192) // Good quality MP3
+      .audioChannels(2) // Stereo
+      .audioFrequency(44100) // Standard sample rate
+      .outputOptions([
+        '-map_metadata', '-1', // Remove all metadata
+        '-metadata', `title=${title}`, // Add back only the title
+        '-write_id3v1', '0', // Don't write ID3v1 tags
+        '-write_id3v2', '1' // Write minimal ID3v2 tags
+      ])
+      .output(outputPath)
+      .on('progress', (progress) => {
+        console.log(`🔄 Converting: ${Math.round(progress.percent || 0)}%`);
+      })
+      .on('end', () => {
+        console.log('✅ Audio converted to MP3 successfully');
+        resolve();
+      })
+      .on('error', (err) => {
+        console.error('❌ Error converting audio:', err);
+        reject(err);
+      })
+      .run();
+  });
+}
+
 // Serve static files from "public"
 app.use(express.static("public"));
 app.use(express.json()); // Parse JSON bodies
@@ -158,8 +205,19 @@ app.post("/api/upload", upload.single('soundFile'), async (req, res) => {
     const processedTempPath = path.join(SFX_DIR, `processed_${Date.now()}_${finalFilename}`);
     
     try {
-      // Strip metadata except title
-      await stripMetadataExceptTitle(req.file.path, processedTempPath, sanitizedName.replace('.mp3', ''));
+      // Check if the uploaded file is already MP3
+      const isAlreadyMp3 = req.file.mimetype === 'audio/mpeg' || 
+                          path.extname(req.file.originalname).toLowerCase() === '.mp3';
+      
+      if (isAlreadyMp3) {
+        console.log('📁 File is already MP3, stripping metadata only...');
+        // Just strip metadata for MP3 files
+        await stripMetadataExceptTitle(req.file.path, processedTempPath, sanitizedName.replace('.mp3', ''));
+      } else {
+        console.log(`🔄 Converting ${path.extname(req.file.originalname)} to MP3...`);
+        // Convert non-MP3 files to MP3 with clean metadata
+        await convertToMp3WithCleanMetadata(req.file.path, processedTempPath, sanitizedName.replace('.mp3', ''));
+      }
       
       // Remove the original uploaded file
       fs.unlinkSync(req.file.path);
@@ -167,7 +225,8 @@ app.post("/api/upload", upload.single('soundFile'), async (req, res) => {
       // Rename the processed file to the final filename
       fs.renameSync(processedTempPath, finalPath);
       
-      console.log(`✅ File uploaded and processed successfully: ${finalFilename}`);
+      const actionText = isAlreadyMp3 ? 'processed' : 'converted and processed';
+      console.log(`✅ File ${actionText} successfully: ${finalFilename}`);
       
     } catch (processingError) {
       console.error('Error processing file:', processingError);
@@ -176,7 +235,7 @@ app.post("/api/upload", upload.single('soundFile'), async (req, res) => {
       if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       if (fs.existsSync(processedTempPath)) fs.unlinkSync(processedTempPath);
       
-      return res.status(500).json({ error: "Error processing file metadata" });
+      return res.status(500).json({ error: "Error processing/converting audio file" });
     }
     
     // Update favorites to include the new sound

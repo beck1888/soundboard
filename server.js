@@ -2,6 +2,11 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
+const ffmpeg = require("fluent-ffmpeg");
+const ffmpegStatic = require("ffmpeg-static");
+
+// Set ffmpeg path
+ffmpeg.setFfmpegPath(ffmpegStatic);
 
 const app = express();
 const PORT = 3000;
@@ -95,12 +100,37 @@ function syncFavoritesWithSounds(sounds, favorites) {
   return updated;
 }
 
+// Function to strip metadata except title
+function stripMetadataExceptTitle(inputPath, outputPath, title) {
+  return new Promise((resolve, reject) => {
+    ffmpeg(inputPath)
+      .outputOptions([
+        '-map', '0:a', // Copy audio stream
+        '-c:a', 'copy', // Don't re-encode audio (faster)
+        '-map_metadata', '-1', // Remove all metadata
+        '-metadata', `title=${title}`, // Add back only the title
+        '-write_id3v1', '0', // Don't write ID3v1 tags
+        '-write_id3v2', '1' // Write minimal ID3v2 tags
+      ])
+      .output(outputPath)
+      .on('end', () => {
+        console.log('✅ Metadata stripped successfully');
+        resolve();
+      })
+      .on('error', (err) => {
+        console.error('❌ Error stripping metadata:', err);
+        reject(err);
+      })
+      .run();
+  });
+}
+
 // Serve static files from "public"
 app.use(express.static("public"));
 app.use(express.json()); // Parse JSON bodies
 
 // Upload endpoint
-app.post("/api/upload", upload.single('soundFile'), (req, res) => {
+app.post("/api/upload", upload.single('soundFile'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
@@ -124,10 +154,30 @@ app.post("/api/upload", upload.single('soundFile'), (req, res) => {
       return res.status(400).json({ error: "A sound with this name already exists" });
     }
     
-    // Rename the temporary file to the final filename
-    fs.renameSync(req.file.path, finalPath);
+    // Create a temporary path for the processed file
+    const processedTempPath = path.join(SFX_DIR, `processed_${Date.now()}_${finalFilename}`);
     
-    console.log(`✅ File uploaded successfully: ${finalFilename}`);
+    try {
+      // Strip metadata except title
+      await stripMetadataExceptTitle(req.file.path, processedTempPath, sanitizedName.replace('.mp3', ''));
+      
+      // Remove the original uploaded file
+      fs.unlinkSync(req.file.path);
+      
+      // Rename the processed file to the final filename
+      fs.renameSync(processedTempPath, finalPath);
+      
+      console.log(`✅ File uploaded and processed successfully: ${finalFilename}`);
+      
+    } catch (processingError) {
+      console.error('Error processing file:', processingError);
+      
+      // Clean up files on error
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      if (fs.existsSync(processedTempPath)) fs.unlinkSync(processedTempPath);
+      
+      return res.status(500).json({ error: "Error processing file metadata" });
+    }
     
     // Update favorites to include the new sound
     let favorites = loadFavorites();
@@ -137,7 +187,7 @@ app.post("/api/upload", upload.single('soundFile'), (req, res) => {
     res.json({ 
       success: true, 
       filename: finalFilename,
-      message: "File uploaded successfully"
+      message: "File uploaded and processed successfully"
     });
     
   } catch (error) {

@@ -301,6 +301,84 @@ app.post("/api/favorites/:filename", (req, res) => {
   }
 });
 
+// Rename sound file
+app.post("/api/rename/:filename", (req, res) => {
+  const oldFilename = req.params.filename;
+  const { newName } = req.body;
+  
+  if (!newName || !newName.trim()) {
+    return res.status(400).json({ error: "New name is required" });
+  }
+  
+  // Sanitize the new name and ensure .mp3 extension
+  const sanitizedName = newName.trim().replace(/[^a-zA-Z0-9\s\-_]/g, '');
+  const newFilename = sanitizedName.endsWith('.mp3') ? sanitizedName : sanitizedName + '.mp3';
+  
+  const oldPath = path.join(SFX_DIR, oldFilename);
+  const newPath = path.join(SFX_DIR, newFilename);
+  
+  // Check if old file exists
+  if (!fs.existsSync(oldPath)) {
+    return res.status(404).json({ error: "File not found" });
+  }
+  
+  // Check if new filename already exists
+  if (fs.existsSync(newPath) && oldPath !== newPath) {
+    return res.status(400).json({ error: "A file with this name already exists" });
+  }
+  
+  try {
+    // Rename the file
+    fs.renameSync(oldPath, newPath);
+    
+    // Update favorites if the file was favorited
+    let favorites = loadFavorites();
+    if (oldFilename in favorites) {
+      const wasFavorited = favorites[oldFilename];
+      delete favorites[oldFilename];
+      favorites[newFilename] = wasFavorited;
+      saveFavorites(favorites);
+    }
+    
+    console.log(`✅ File renamed: ${oldFilename} → ${newFilename}`);
+    res.json({ success: true, newFilename });
+    
+  } catch (error) {
+    console.error("Error renaming file:", error);
+    res.status(500).json({ error: "Failed to rename file" });
+  }
+});
+
+// Delete sound file
+app.delete("/api/delete/:filename", (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(SFX_DIR, filename);
+  
+  // Check if file exists
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: "File not found" });
+  }
+  
+  try {
+    // Delete the file
+    fs.unlinkSync(filePath);
+    
+    // Remove from favorites
+    let favorites = loadFavorites();
+    if (filename in favorites) {
+      delete favorites[filename];
+      saveFavorites(favorites);
+    }
+    
+    console.log(`🗑️ File deleted: ${filename}`);
+    res.json({ success: true });
+    
+  } catch (error) {
+    console.error("Error deleting file:", error);
+    res.status(500).json({ error: "Failed to delete file" });
+  }
+});
+
 // Serve actual MP3 files
 app.get("/sfx/:filename", (req, res) => {
   const filePath = path.join(SFX_DIR, req.params.filename);

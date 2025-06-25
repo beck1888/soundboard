@@ -34,10 +34,10 @@ async function toggleFavorite(filename) {
 function createSoundItem(file, isFavorite) {
   const div = document.createElement("div");
   div.className = "sound-item";
-  
+
   // Remove .mp3 extension for display
   const displayName = file.replace(/\.mp3$/i, '');
-  
+
   div.innerHTML = `
     <div class="sound-title">
       <span class="filename">${displayName}</span>
@@ -53,6 +53,10 @@ function createSoundItem(file, isFavorite) {
         <img src='/${isFavorite ? 'heart_on.svg' : 'heart_off.svg'}' alt='${isFavorite ? 'Favorited' : 'Not favorited'}'>
       </button>
     </div>
+    <div class="context-menu" style="display: none;">
+      <button class="rename-btn"><img src='/edit.svg' alt='Rename' style='width:16px;height:16px;margin-right:4px;'>Rename</button>
+      <button class="delete-btn"><img src='/delete.svg' alt='Delete' style='width:16px;height:16px;margin-right:4px;'>Delete</button>
+    </div>
   `;
 
   const audio = new Audio(`/sfx/${encodeURIComponent(file)}`);
@@ -64,9 +68,147 @@ function createSoundItem(file, isFavorite) {
   const timeText = div.querySelector(".time");
   const downloadBtn = div.querySelector(".download-btn");
   const favoriteBtn = div.querySelector(".favorite-btn");
+  const contextMenu = div.querySelector(".context-menu");
+  const renameBtn = div.querySelector(".rename-btn");
+  const deleteBtn = div.querySelector(".delete-btn");
 
   let isPlaying = false;
   let animationId = null;
+
+  // Right-click menu functionality
+  div.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+
+    // Add blur effect to the sound content
+    div.classList.add("blurred");
+    
+    // Show the context menu overlay
+    contextMenu.style.display = "flex";
+  });
+
+  // Close context menu when clicking anywhere
+  document.addEventListener("click", (e) => {
+    // Only close if clicking outside the current sound item or on the sound item but not on the context menu
+    if (!div.contains(e.target) || (div.contains(e.target) && !contextMenu.contains(e.target))) {
+      contextMenu.style.display = "none";
+      div.classList.remove("blurred");
+    }
+  });
+
+  // Prevent context menu from closing when clicking on it
+  contextMenu.addEventListener("click", (e) => {
+    e.stopPropagation();
+  });
+
+  // Rename functionality
+  renameBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    
+    // Hide context menu and remove blur
+    contextMenu.style.display = "none";
+    div.classList.remove("blurred");
+    
+    const modal = document.getElementById("rename-modal");
+    const modalInput = document.getElementById("rename-input");
+    const modalConfirm = document.getElementById("rename-confirm");
+    const modalCancel = document.getElementById("rename-cancel");
+
+    // Center modal by using flex display (matches CSS)
+    modal.style.display = "flex";
+    modalInput.value = displayName;
+
+    modalCancel.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+
+    modalConfirm.addEventListener("click", async () => {
+      const newName = modalInput.value.trim();
+      if (newName) {
+        try {
+          const response = await fetch(`/api/rename/${encodeURIComponent(file)}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ newName })
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            // Update the display name (remove .mp3 extension for display)
+            const newDisplayName = result.newFilename.replace(/\.mp3$/i, '');
+            div.querySelector(".filename").textContent = newDisplayName;
+            
+            // Update the audio source and download link
+            const audio = div.querySelector('audio') || new Audio();
+            audio.src = `/sfx/${encodeURIComponent(result.newFilename)}`;
+            
+            modal.style.display = "none";
+            
+            console.log(`✅ File renamed successfully to: ${result.newFilename}`);
+          } else {
+            const error = await response.json();
+            console.error("Failed to rename file:", error.error);
+            alert(`Failed to rename file: ${error.error}`);
+          }
+        } catch (err) {
+          console.error("Error renaming file:", err);
+          alert("Error renaming file. Please try again.");
+        }
+      }
+    });
+  });
+
+  // Delete functionality
+  deleteBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    // Hide context menu and remove blur
+    contextMenu.style.display = "none";
+    div.classList.remove("blurred");
+    const modal = document.getElementById("delete-modal");
+    const modalCheckbox = document.getElementById("delete-checkbox");
+    const modalConfirm = document.getElementById("delete-confirm");
+    const modalCancel = document.getElementById("delete-cancel");
+    // Show the name of the sound to be deleted in bold
+    let modalSoundName = document.getElementById("delete-sound-name");
+    if (!modalSoundName) {
+      modalSoundName = document.createElement("div");
+      modalSoundName.id = "delete-sound-name";
+      modalSoundName.style.marginBottom = "8px";
+      modalSoundName.style.fontWeight = "bold";
+      modalSoundName.style.textAlign = "center";
+      // Insert only if modalCheckbox exists and has a parent
+      if (modalCheckbox && modalCheckbox.parentElement) {
+        modalCheckbox.parentElement.insertBefore(modalSoundName, modalCheckbox);
+      } else {
+        modal.appendChild(modalSoundName);
+      }
+    }
+    modalSoundName.innerHTML = `Deleting: <b>${displayName}</b>`;
+    modal.style.display = "flex";
+    modalConfirm.disabled = true;
+    modalCheckbox.addEventListener("change", () => {
+      modalConfirm.disabled = !modalCheckbox.checked;
+    });
+    modalCancel.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+    modalConfirm.addEventListener("click", async () => {
+      try {
+        const response = await fetch(`/api/delete/${encodeURIComponent(file)}`, { method: "DELETE" });
+        if (response.ok) {
+          div.remove();
+          modal.style.display = "none";
+          console.log(`🗑️ File deleted successfully: ${file}`);
+        } else {
+          const error = await response.json();
+          console.error("Failed to delete file:", error.error);
+          alert(`Failed to delete file: ${error.error}`);
+        }
+      } catch (err) {
+        console.error("Error deleting file:", err);
+        alert("Error deleting file. Please try again.");
+      }
+    });
+  });
 
   // Download button functionality
   downloadBtn.addEventListener("click", async () => {

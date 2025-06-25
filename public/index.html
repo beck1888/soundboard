@@ -64,6 +64,43 @@
       </div>
     </div>
   </div>
+
+  <!-- Rename Modal -->
+  <div id="rename-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Rename Sound</h2>
+      </div>
+      <div class="modal-body">
+        <label for="rename-input">New name:</label>
+        <input type="text" id="rename-input" placeholder="Enter new name">
+      </div>
+      <div class="modal-buttons">
+        <button id="rename-cancel" class="modal-cancel-btn">Cancel</button>
+        <button id="rename-confirm" class="modal-confirm-btn">Rename</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Modal -->
+  <div id="delete-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Delete Sound</h2>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete this sound? This action cannot be undone.</p>
+        <label class="checkbox-label">
+          <input type="checkbox" id="delete-checkbox">
+          <span>Yes, I want to delete this sound</span>
+        </label>
+      </div>
+      <div class="modal-buttons">
+        <button id="delete-cancel" class="modal-cancel-btn">Cancel</button>
+        <button id="delete-confirm" class="modal-confirm-btn" disabled>Delete</button>
+      </div>
+    </div>
+  </div>
   
   <script src="app.js"></script>
 </body>
